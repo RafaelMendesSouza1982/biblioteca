@@ -1,0 +1,984 @@
+<?php
+
+/**
+ * Classe que realiza interações com dados para contratos
+ *
+ */
+class RedeDAO extends Extra_Model_DAO {
+
+    const ERROR_AO_GERAR_IP_ACIONAR_API_CODIGO = 49;
+    const ERROR_AO_GERAR_IP_ACIONAR_API_MSG_USUARIO = "Ao acionar o serviço do aloca ip.";
+    const ERROR_AO_GERAR_IP_CODIGO = 50;
+    const ERROR_AO_GERAR_IP_MENSAGEM = "Ao alocar o ip no aloca ip.";
+    const ERROR_AO_GERAR_IP_DECODIFICACAO_DO_JSON = 51;
+    const ERROR_AO_GERAR_IP_ALOCA_IP_NAO_GERADO_CODIGO = 53;
+    const ERROR_AO_GERAR_IP_ALOCA_IP_NAO_GERADO_MENSAGEM_USUARIO = 'Ao alocar o ip.';
+    const STATUS_IP_VAGO = "VAGO";
+    const STATUS_IP_EM_PROCESSAMENTO = "EM_PROCESSAMENTO";
+    const STATUS_IP_USADO = "USADO";
+    const STATUS_IP_ERROR_JENKINS = "ERRO_JENKINS";
+    const STATUS_IP_DESALOCADO = "DESALOCADO";
+    const STATUS_IP_PENDENTE_DESALOCACAO = "PENDENTE_DESALOCACAO";
+
+    /**
+     * Código fixo do aloca ip denominado "par"
+     */
+    const CODIGO_ALOCA_PARAMETRO_PAR = "S";
+
+    /**
+     * Código fixo do aloca ip denominado "par_Criado"
+     */
+    const CODIGO_ALOCA_PARAMETRO_PAR_CRIADO = "S";
+
+    public static function build() {
+        return new self();
+    }
+
+    /**
+     * Retorna todos os códigos de erros esperados do aloca ip
+     * @return array
+     */
+    public static function getErrorCodes() {
+
+        return array(
+            self::ERROR_AO_GERAR_IP_ACIONAR_API_CODIGO,
+            self::ERROR_AO_GERAR_IP_CODIGO,
+            self::ERROR_AO_GERAR_IP_DECODIFICACAO_DO_JSON,
+            self::ERROR_AO_GERAR_IP_ALOCA_IP_NAO_GERADO_CODIGO,
+        );
+    }
+
+//    /**
+//     * 
+//     * @return integer $co_ip código provisionado na tabela
+//     */
+//    public function getFormPorCodigoIp($co_ip) {
+//
+//        $rede_tabel = new Rede();
+//        $row = $rede_tabel->find($co_ip)->current();
+//        return $row->toArray();
+//    }
+
+    /**
+     * 
+     * @param type $co_form
+     * @return array|null
+     */
+    public function getDadosIpPorCodigodoForm($co_form) {
+
+        $rede_tabel = new Rede();
+        $row = $rede_tabel->fetchRow("co_form = $co_form");
+        if (!is_null($row)) {
+            return $row->toArray();
+        }
+    }
+
+    public function statusIp() {
+        $db = Zend_Db_Table_Abstract::getDefaultAdapter();
+        $sql = "SELECT status, ip_vm, mascara_vm, gateway_vm, hostname, sistema_op
+                   FROM ifs.ifstb002_dados_ip
+                   where status = 'VAGO'
+                   and sistema_op in ('LINUX','WINDOWS')
+		   order by ip_vm asc";
+        $resultado = $db->fetchAll($sql);
+
+        return $resultado;
+    }
+
+    /**
+     * 
+     * Seta o estado do IP para USADO
+     * @param type $ip
+     */
+    public function setStatusIpUsado($co_form, $ip) {
+
+        $rede_tabel = new Rede();
+        $row = $rede_tabel->find($ip, $co_form)->current();
+        $data['status'] = RedeDAO::STATUS_IP_USADO;
+        $data['dt_data_hora_status'] = date('Y-m-d H:i:s');
+        $row->setFromArray($data)->save();
+    }
+
+    /**
+     * 
+     * @return integer $co_ip código provisionado na tabela
+     */
+    public function provisonarCodigoDoFormIp($co_form) {
+
+        $rede_tabel = new Rede();
+        $data['status'] = 'VAGO';
+        $data['dt_data_hora_status'] = date('Y-m-d H:i:s');
+        $db = Zend_Db_Table_Abstract::getDefaultAdapter();
+        $db->beginTransaction();
+        $row = $rede_tabel->fetchRow("status = 'VAGO' AND sistema_op in ('LINUX','WINDOWS')", 'ip_vm ASC');
+//        Zend_Debug::dump($row);
+//        exit();
+        if (!is_null($row)) {
+            $data_rede = $row->toArray();
+//            Zend_Debug::dump($data_rede);
+//            exit();
+            //aprovisionando
+            $data_aprovisionamento['status'] = 'EM_PROCESSAMENTO';
+            $data_aprovisionamento['co_form'] = $co_form;
+            $row->setFromArray($data_aprovisionamento)->save();
+            $db->commit();
+            return $data_rede;
+        } else {
+            return FALSE;
+            $db->commit();
+        }
+    }
+
+//    /**
+//     * 
+//     * @return integer $co_ip código provisionado na tabela
+//     */
+//    public function liberarIpVm($ip) {
+//
+////        exit();
+//        if (!is_null($ip)) {
+//            $rede_tabel = new Rede();
+//            $row = $rede_tabel->find($ip)->current();
+//            $data['status'] = RedeDAO::STATUS_IP_ERROR_JENKINS;
+//            $data['co_form'] = new Zend_Db_Expr('NULL');
+//            $data['dt_data_hora_status'] = date('Y-m-d H:i:s');
+//            $row->setFromArray($data)->save();
+//        }
+//    }
+
+    /**
+     * 
+     * @param type $co_form
+     * @param type $ip
+     * @param type $ip_base_dez
+     * @throws Extra_Exception_Infrasimples
+     */
+    public function desalocarIp($co_form, $ip, $ip_base_dez) {
+
+        $rede_table = new Rede();
+        $row = $rede_table->find($ip, $co_form)->current();
+        $data = $row->toArray();
+        if ($data['status'] == RedeDAO::STATUS_IP_DESALOCADO) {
+            return true;
+        }
+
+        try {
+            $curl = curl_init();
+            $options = array(
+//                CURLOPT_URL => getenv('ALOCAIP') . "/ApiAlocaIP/Deslocar",
+                CURLOPT_URL => getenv('ALOCAIP') . "/ApiAlocaIP/Desalocar",
+                CURLOPT_RETURNTRANSFER => true,
+                CURLOPT_ENCODING => "",
+                CURLOPT_MAXREDIRS => 10,
+                CURLOPT_TIMEOUT => 60,
+                CURLOPT_HTTP_VERSION => CURL_HTTP_VERSION_1_1,
+                CURLOPT_CUSTOMREQUEST => "POST",
+                CURLOPT_HTTPHEADER => array(
+                    "Accept: text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8",
+                    "Accept-Language: pt-BR,pt;q=0.8,en-US;q=0.5,en;q=0.3",
+                    "Accept-Encoding: gzip, deflate",
+                    "Upgrade-Insecure-Requests: 1"
+            ));
+           
+            
+            $usuario = "C&t@d02";
+            $senha = "@ut0m@c@0!";
+            
+            $options[CURLOPT_POSTFIELDS] = "&id=" . urlencode($usuario) . "&senha=" . urlencode($senha) . "&IpConvertido=" . urlencode($ip) . "&IpnaoConvertido=" . urlencode($ip_base_dez);
+            curl_setopt_array($curl, $options);
+            $response = curl_exec($curl);
+            $httpcode = curl_getinfo($curl, CURLINFO_HTTP_CODE);
+
+            $info = curl_getinfo($curl);
+            if ((int) curl_errno($curl) > 0 || $httpcode != 200) {
+                $tec_msg = "Http Code: " . $httpcode . "</br>" . Zend_Debug::dump($info, "Error gerar o ip.", false) . "</br>" . $response;
+                $msg = new Extra_Exception_Mensagem(Extra_Exception_Erros_Erros::ALOCA_IP_DESALOCAR_CODE, Extra_Exception_Erros_Erros::ALOCA_IP_DESALOCAR_MSG_USER, $tec_msg);
+                throw new Extra_Exception_Infrasimples(Extra_Exception_Infrasimples::TYPE_ERROR, $msg);
+            }
+            curl_close($curl);
+        } catch (Exception $exc) {
+
+            $rede_table = new Rede();
+            $row = $rede_table->find($ip, $co_form)->current();
+            $data['status'] = RedeDAO::STATUS_IP_PENDENTE_DESALOCACAO;
+            $data['dt_data_hora_status'] = date('Y-m-d H:i:s');
+            $row->setFromArray($data)->save();
+
+            if ($exc instanceof Extra_Exception_Infrasimples) {
+                (!isset($co_form)) ? ($co_form = null) : ('');
+                (!isset($ip_vm)) ? ($ip_vm = null) : ('');
+                $data_log = new Extra_Exception_Log_Vm($co_form, $ip_vm);
+                $exc->addLogData($data_log);
+                $exc->saveLog();
+            } else {
+                $tec_msg = $exc->getMessage();
+                $msg = new Extra_Exception_Mensagem($exc->getCode(), Extra_Exception_Erros_Erros::ERRRO_DESCONHECIDO_MSG_USER, $tec_msg);
+                $exc_generica = new Extra_Exception_Infrasimples(Extra_Exception_Infrasimples::TYPE_ERROR, $msg, $exc);
+                (!isset($co_form)) ? ($co_form = null) : ('');
+                (!isset($ip_vm)) ? ($ip_vm = null) : ('');
+                $data_log = new Extra_Exception_Log_Vm($co_form, $ip_vm);
+                $exc_generica->addLogData($data_log);
+                $exc_generica->saveLog();
+            }
+        }
+
+        $response = ltrim($response, chr(239) . chr(187) . chr(191));
+        $response_arr = Zend_Json::decode($response);
+        try {
+            if (isset($response_arr["Desalocar"][0]) && ($response_arr["Desalocar"][0] == "sucesso")) {
+
+                $rede_table = new Rede();
+                $row = $rede_table->find($ip, $co_form)->current();
+                $data['status'] = RedeDAO::STATUS_IP_DESALOCADO;
+                $data['dt_data_hora_status'] = date('Y-m-d H:i:s');
+                $row->setFromArray($data)->save();
+            } else {
+                $tec_msg = "Http Code: " . $httpcode . "</br>" . Zend_Debug::dump($info, "info curl", false) . "</br>" . $response;
+                $msg = new Extra_Exception_Mensagem(Extra_Exception_Erros_Erros::ALOCA_IP_DESALOCAR_CODE, Extra_Exception_Erros_Erros::ALOCA_IP_DESALOCAR_MSG_USER, $tec_msg);
+                throw new Extra_Exception_Infrasimples(Extra_Exception_Infrasimples::TYPE_ERROR, $msg);
+            }
+        } catch (Exception $exc) {
+            $rede_table = new Rede();
+            $row = $rede_table->find($ip, $co_form)->current();
+            $data['status'] = RedeDAO::STATUS_IP_PENDENTE_DESALOCACAO;
+            $data['dt_data_hora_status'] = date('Y-m-d H:i:s');
+            $row->setFromArray($data)->save();
+
+            if ($exc instanceof Extra_Exception_Infrasimples) {
+                (!isset($co_form)) ? ($co_form = null) : ('');
+                (!isset($ip_vm)) ? ($ip_vm = null) : ('');
+                $data_log = new Extra_Exception_Log_Vm($co_form, $ip_vm);
+                $exc->addLogData($data_log);
+                $exc->saveLog();
+            } else {
+                $tec_msg = $exc->getMessage();
+                $msg = new Extra_Exception_Mensagem($exc->getCode(), Extra_Exception_Erros_Erros::ERRRO_DESCONHECIDO_MSG_USER, $tec_msg);
+                $exc_generica = new Extra_Exception_Infrasimples(Extra_Exception_Infrasimples::TYPE_ERROR, $msg, $exc);
+                (!isset($co_form)) ? ($co_form = null) : ('');
+                (!isset($ip_vm)) ? ($ip_vm = null) : ('');
+                $data_log = new Extra_Exception_Log_Vm($co_form, $ip_vm);
+                $exc_generica->addLogData($data_log);
+                $exc_generica->saveLog();
+            }
+        }
+
+        return $response;
+    }
+
+    /**
+     * 
+     * @return integer $co_ip código provisionado na tabela
+     */
+    public function atualizaStatusLogBuild($co_form, $co_ip, $ic_status_log_build) {
+
+        $rede_tabel = new Rede();
+        $row = $rede_tabel->find($co_ip, $co_form)->current();
+        $data['ic_status_log_build'] = $ic_status_log_build;
+        $data['dt_data_hora_status_log_build'] = date('Y-m-d H:i:s');
+        $row->setFromArray($data)->save();
+    }
+
+//    /**
+//     * Atualiza a tabela com o status do envio do form
+//     * @param type $co_ip
+//     * @param type $msg_envio_jenkins
+//     */
+//    public function setSucessoOuFalhaEnvioForm($co_ip, $msg_envio_jenkins) {
+//
+//        $rede_tabel = new Rede();
+//        if (isset($msg_envio_jenkins['sucesso'])) {
+//            $row = $rede_tabel->find($co_ip)->current();
+//            $data['status'] = 'ENVIADO';
+//            $data['dt_data_hora_status'] = date('Y-m-d H:i:s');
+//            $row->setFromArray($data)->save();
+//        } else if (isset($msg_envio_jenkins['erro'])) {
+//            $row = $rede_tabel->find($co_ip)->current()->delete();
+//        }
+//    }
+
+    public function jenkins($connect_jenkins) {
+        set_time_limit(1200);
+        $curl = curl_init();
+        curl_setopt_array($curl, array(
+            CURLOPT_URL => getenv('JENKINS_URL') . "/job/automacao_vms/build",
+            CURLOPT_RETURNTRANSFER => true,
+            CURLOPT_HEADER => true,
+            CURLOPT_ENCODING => "",
+            CURLOPT_MAXREDIRS => 10,
+            CURLOPT_TIMEOUT => 30,
+            CURLOPT_HTTP_VERSION => CURL_HTTP_VERSION_1_1,
+            CURLOPT_CUSTOMREQUEST => "POST",
+            CURLOPT_POSTFIELDS => "json=$connect_jenkins",
+            CURLOPT_HTTPHEADER => array(
+                "Authorization: Basic " . getenv('JENKINS_TOKEN'),
+                "Cache-Control: no-cache",
+                "Content-Type: application/x-www-form-urlencoded",
+            ),
+        ));
+        $response = curl_exec($curl);
+        $httpcode = curl_getinfo($curl, CURLINFO_HTTP_CODE);
+        $err = curl_error($curl);
+        //http 201 indica que a requisição foi bem sucedida e que um novo recurso foi criado
+        if ($err != "" || $httpcode != 201) {
+            $msn['erro'] = "</br>Falha ao iníciar criação da VM. Código de erro http: $httpcode. Erro da requisição: $err.";
+            //echo "Conexão apresentou o(os) seguinte(es) erros (" . $err . " )";
+        } else {
+            $msn['sucesso'] = "Iníciado criação da VM.";
+            //echo $response;
+        }
+        return $msn;
+    }
+
+    public function deletevmjenkins() {
+        $curl = curl_init();
+        curl_setopt_array($curl, array(
+            CURLOPT_URL => getenv('JENKINS_URL') . "/job/automacao_vms/build",
+            CURLOPT_RETURNTRANSFER => true,
+            CURLOPT_ENCODING => "",
+            CURLOPT_MAXREDIRS => 10,
+            CURLOPT_TIMEOUT => 30,
+            CURLOPT_HTTP_VERSION => CURL_HTTP_VERSION_1_1,
+            CURLOPT_CUSTOMREQUEST => "POST",
+            CURLOPT_POSTFIELDS => "json=$var_json",
+            CURLOPT_HTTPHEADER => array(
+                "Authorization: Basic " . getenv('JENKINS_TOKEN'),
+                "Cache-Control: no-cache",
+                "Content-Type: application/x-www-form-urlencoded",
+            ),
+        ));
+
+        $response = curl_exec($curl);
+        $err = curl_error($curl);
+        curl_close($curl);
+        if ($err) {
+            echo "cURL Error #:" . $err;
+        } else {
+            echo $response;
+        }
+    }
+
+    public function monitoravm() {
+        $curl = curl_init();
+        curl_setopt_array($curl, array(
+            CURLOPT_URL => getenv('JENKINS_URL') . "/job/automacao_vms/wfapi/runs",
+            CURLOPT_RETURNTRANSFER => true,
+            CURLOPT_ENCODING => "",
+            CURLOPT_MAXREDIRS => 10,
+            CURLOPT_TIMEOUT => 30,
+            CURLOPT_HTTP_VERSION => CURL_HTTP_VERSION_1_1,
+            CURLOPT_CUSTOMREQUEST => "GET",
+            CURLOPT_HTTPHEADER => array(
+                "Authorization: Basic " . getenv('JENKINS_TOKEN'),
+                "Cache-Control: no-cache",
+                "Content-Type: application/x-www-form-urlencoded",
+            ),
+        ));
+
+        set_time_limit(1200);
+        $response = curl_exec($curl);
+        $err = curl_error($curl);
+        curl_close($curl);
+        $res = json_decode($response, true);
+        $monitora_vm = $res[0]["id"];
+        return $monitora_vm;
+    }
+
+    public function dadosUltimas10BuildsIp() {
+        $curl = curl_init();
+        curl_setopt_array($curl, array(
+            CURLOPT_URL => getenv('JENKINS_URL') . "/job/automacao_vms/wfapi/runs",
+            CURLOPT_RETURNTRANSFER => true,
+            CURLOPT_ENCODING => "",
+            CURLOPT_MAXREDIRS => 10,
+            CURLOPT_TIMEOUT => 30,
+            CURLOPT_HTTP_VERSION => CURL_HTTP_VERSION_1_1,
+            CURLOPT_CUSTOMREQUEST => "GET",
+            CURLOPT_HTTPHEADER => array(
+                "Authorization: Basic " . getenv('JENKINS_TOKEN'),
+                "Cache-Control: no-cache",
+                "Content-Type: application/x-www-form-urlencoded",
+            ),
+        ));
+
+        set_time_limit(1200);
+        $dados_ultimas_10_builds = curl_exec($curl);
+        $err = curl_error($curl);
+        curl_close($curl);
+        return Zend_Json::decode($dados_ultimas_10_builds);
+    }
+
+    public function codigosDasUltimas10BuildsIp($dados_ultimas_10_builds = NULL) {
+        if (is_null($dados_ultimas_10_builds)) {
+            $dados_ultimas_10_builds = $this->dadosUltimas10BuildsIp();
+        }
+        $codigos = array();
+        foreach ($dados_ultimas_10_builds as $build) {
+            $codigos[] = $build["id"];
+        }
+        return $codigos;
+    }
+
+    public function procuraCodigoDaBuildDoFormIp($co_ip) {
+
+        $codigos_das_ultimas_10_builds = $this->codigosDasUltimas10BuildsIp();
+        $nomes_paremetros = array('var_cd_ifs');
+        foreach ($codigos_das_ultimas_10_builds as $co_build) {
+            $parametros = $this->vmparametros($nomes_paremetros, $co_build);
+            if ($parametros['var_cd_ifs'] == $co_ip) {
+                return $co_build;
+            }
+        }
+    }
+
+    public function procuraCodigoDaBuildDoFormPorNvezesIp($co_ip, $qtd_vezes = 120, $sleep = 1) {
+
+        for ($index = 0; $index < $qtd_vezes; $index++) {
+            $co_build = $this->procuraCodigoDaBuildDoFormIp($co_ip);
+            if (!is_null($co_build)) {
+                return $co_build;
+            }
+            sleep($sleep);
+        }
+    }
+
+    public function vmparametros($nomes_paremetros = array(), $co_build) {
+        $resp = array();
+//        $resultado = $this->monitoravm();
+//        Zend_Debug::dump($resultado);die;
+        $curl = curl_init();
+        $headers = array();
+        curl_setopt($curl, CURLOPT_HEADERFUNCTION, function($curl, $header) use (&$headers) {
+            $len = strlen($header);
+            $header = explode(':', $header, 2);
+            if (count($header) < 2) { // ignore invalid headers
+                return $len;
+            }
+            $name = strtolower(trim($header[0]));
+            if (!array_key_exists($name, $headers)) {
+                $headers[$name] = array(trim($header[1]));
+            } else {
+                $headers[$name][] = trim($header[1]);
+            }
+            return $len;
+        });
+        $options = array(
+            CURLOPT_URL => getenv('JENKINS_URL') . "/j_acegi_security_check",
+            CURLOPT_RETURNTRANSFER => true,
+            CURLOPT_ENCODING => "",
+            CURLOPT_MAXREDIRS => 10,
+            CURLOPT_TIMEOUT => 30,
+            CURLOPT_HTTP_VERSION => CURL_HTTP_VERSION_1_1,
+            CURLOPT_CUSTOMREQUEST => "POST",
+            CURLOPT_HTTPHEADER => array(
+                "Accept: text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8",
+                "Accept-Language: pt-BR,pt;q=0.8,en-US;q=0.5,en;q=0.3",
+                "Accept-Encoding: gzip, deflate",
+                "Upgrade-Insecure-Requests: 1"
+        ));
+        $options[CURLOPT_POSTFIELDS] = "&j_username=" . urlencode('SVMSBP01') . "&j_password=" . urlencode("h6rb286x") . "&from=" . urlencode("/") . "&Submit=" . urlencode("Sign+in");
+        curl_setopt_array($curl, $options);
+        $response_login = curl_exec($curl);
+        if ((int) curl_errno($curl) > 0) {
+            $info = curl_getinfo($curl);
+            throw new Exception(Zend_Debug::dump($info, "Error no login.", false));
+        }
+        curl_close($curl);
+        $headers_response_login = $headers;
+//        Zend_Debug::dump($headers_response_login, '$headers_response_login');
+
+        $headers_propagate = array();
+        $cookie = array();
+        foreach ($headers_response_login as $response_key => $response_value) {
+            if ($response_key == "set-cookie") {
+                foreach ($response_value as $response_cookie) {
+                    $c0 = explode(';', $response_cookie);
+                    $c1 = explode('=', $c0[0]);
+                    $response_cookie_name = $c1[0];
+                    $response_cookie_value = $c1[1];
+                    $cookie[] = $response_cookie_name . '=' . $response_cookie_value;
+                }
+            }
+        }
+        $headers_propagate[] = 'Cookie: ' . implode(';', $cookie);
+        //Zend_Debug::dump($headers_propagate, '$headers_propagate Cookie');
+
+
+        $curl = curl_init();
+        $options = array(
+            CURLOPT_URL => getenv('JENKINS_URL') . "/job/automacao_vms/$co_build/consoleText",
+            CURLOPT_RETURNTRANSFER => true,
+            CURLOPT_ENCODING => "",
+            CURLOPT_MAXREDIRS => 10,
+            CURLOPT_TIMEOUT => 30,
+            CURLOPT_HTTP_VERSION => CURL_HTTP_VERSION_1_1,
+            CURLOPT_CUSTOMREQUEST => "GET",
+            CURLOPT_HTTPHEADER => array(
+                "Accept: text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8",
+                "Accept-Language: pt-BR,pt;q=0.8,en-US;q=0.5,en;q=0.3",
+                "Accept-Encoding: gzip, deflate",
+                "Connection: keep-alive",
+                "Upgrade-Insecure-Requests: 1",
+                "Cache-Control: max-age=0"
+        ));
+        if (!empty($headers_propagate)) {
+            foreach ($headers_propagate as $v) {
+                $options[CURLOPT_HTTPHEADER][] = $v;
+            }
+        }
+        curl_setopt_array($curl, $options);
+        $response = curl_exec($curl);
+        if ((int) curl_errno($curl) > 0) {
+            $info = curl_getinfo($curl);
+            throw new Exception(Zend_Debug::dump($info, "Erro ao recuperar os parametros.", false));
+        }
+        curl_close($curl);
+//        Zend_Debug::dump($response,'$response');
+
+        $response_arr = Zend_Json::decode($response);
+//        Zend_Debug::dump($response_arr,'$response_arr');die;
+        $parameters = $response_arr["actions"][0]["parameters"];
+        $var_vm_cd_infrasimples = null;
+        $extract_parameters = array();
+//        Zend_Debug::dump($parameters);
+        foreach ($parameters as $parameter) {
+            foreach ($nomes_paremetros as $parametro) {
+                if ($parameter["name"] == $parametro) {
+                    $extract_parameters[$parametro] = $parameter["value"];
+                }
+            }
+        }
+        return $extract_parameters;
+    }
+
+    public function consultaLog($co_build) {
+        set_time_limit(1200);
+        $resp = array();
+        $curl = curl_init();
+        curl_setopt_array($curl, array(
+            CURLOPT_URL => getenv('JENKINS_URL') . "/job/automacao_vms/$co_build/wfapi/describe",
+            CURLOPT_RETURNTRANSFER => true,
+            CURLOPT_ENCODING => "",
+            CURLOPT_MAXREDIRS => 10,
+            CURLOPT_TIMEOUT => 30,
+            CURLOPT_HTTP_VERSION => CURL_HTTP_VERSION_1_1,
+            CURLOPT_CUSTOMREQUEST => "GET",
+            CURLOPT_HTTPHEADER => array(
+                "Authorization: Basic " . getenv('JENKINS_TOKEN'),
+                "Cache-Control: no-cache",
+                "Content-Type: application/x-www-form-urlencoded",
+            ),
+        ));
+        $response = curl_exec($curl);
+        $err = curl_error($curl);
+        curl_close($curl);
+        $res = json_decode($response, true);
+        $monitora = $res["stages"];
+        foreach ($monitora as $v) {
+            if (isset($v['id'])) {
+                $resposta['id_status'] = $v['id'];
+            }
+            if (isset($v['name'])) {
+                $resposta['id_vm'] = $v['name'];
+            }
+            if (isset($v['status'])) {
+                $resposta['status_vm'] = $v['status'];
+            }
+            if (isset($v['error'])) {
+                $error = $v['error'];
+                foreach ($error as $v2) {
+                    $resposta['message_error'] = $error['message'];
+                    $resposta['type_error'] = $error['type'];
+                }
+            }
+        }
+//        Zend_Debug::dump($resposta);
+        return $resposta;
+    }
+
+    /**
+     * Função que retorna a lista de sites do aloca ip
+     * @return array
+     */
+    public function getSites() {
+
+        set_time_limit(1200);
+        $curl = curl_init();
+        curl_setopt_array($curl, array(
+            CURLOPT_URL => getenv('ALOCAIP') . "/ApiAlocaIP/Site",
+//            CURLOPT_URL => "http://apialocaip.cetad.caixa/ApiAlocaIP/Site",
+            CURLOPT_HEADER => FALSE,
+            CURLOPT_RETURNTRANSFER => TRUE,
+            CURLOPT_ENCODING => "UTF8",
+            CURLOPT_TIMEOUT => 30,
+            CURLOPT_HTTP_VERSION => CURL_HTTP_VERSION_1_1,
+            CURLOPT_CUSTOMREQUEST => "GET",
+            CURLOPT_HTTPHEADER => array(
+                "Cache-Control: no-cache",
+                "Content-Type: application/json",
+            ),
+        ));
+        $sites = curl_exec($curl);
+        /**
+         * chr(239),chr(187),chr(191) equivale o código de UTF8 WITH BOM: ï»¿ 
+         * que parece no início da string
+         * https://en.wikipedia.org/wiki/Byte_order_mark
+         */
+        $sites = ltrim($sites, chr(239) . chr(187) . chr(191));
+        $err = curl_error($curl);
+        curl_close($curl);
+        return Zend_Json::decode($sites);
+    }
+
+    /**
+     * Função que retorna a lista de sites do aloca ip
+     * @return array
+     */
+    public function getUnidades() {
+
+        set_time_limit(1200);
+        $curl = curl_init();
+        curl_setopt_array($curl, array(
+            CURLOPT_URL => getenv('ALOCAIP') . "/ApiAlocaIP/Unidade",
+//            CURLOPT_URL => "http://apialocaip.cetad.caixa/ApiAlocaIP/Unidade",
+            CURLOPT_HEADER => FALSE,
+            CURLOPT_RETURNTRANSFER => TRUE,
+            CURLOPT_ENCODING => "UTF8",
+            CURLOPT_TIMEOUT => 30,
+            CURLOPT_HTTP_VERSION => CURL_HTTP_VERSION_1_1,
+            CURLOPT_CUSTOMREQUEST => "GET",
+            CURLOPT_HTTPHEADER => array(
+                "Cache-Control: no-cache",
+                "Content-Type: application/json",
+            ),
+        ));
+        $unidades = curl_exec($curl);
+        /**
+         * chr(239),chr(187),chr(191) equivale o código de UTF8 WITH BOM: ï»¿ 
+         * que parece no início da string
+         * https://en.wikipedia.org/wiki/Byte_order_mark
+         */
+        $unidades = ltrim($unidades, chr(239) . chr(187) . chr(191));
+        $err = curl_error($curl);
+        curl_close($curl);
+        return Zend_Json::decode($unidades);
+    }
+
+    /**
+     * Função que retorna a lista de sites do aloca ip
+     * @return array
+     */
+    public function getVerticais($site) {
+
+        set_time_limit(1200);
+        $curl = curl_init();
+        $options = array(
+            CURLOPT_URL => getenv('ALOCAIP') . "/ApiAlocaIP/Vertical",
+//            CURLOPT_URL => "http://apialocaip.cetad.caixa/ApiAlocaIP/Vertical",
+            CURLOPT_RETURNTRANSFER => true,
+            CURLOPT_ENCODING => "",
+            CURLOPT_MAXREDIRS => 10,
+            CURLOPT_TIMEOUT => 30,
+            CURLOPT_HTTP_VERSION => CURL_HTTP_VERSION_1_1,
+            CURLOPT_CUSTOMREQUEST => "POST",
+            CURLOPT_HTTPHEADER => array(
+                "Accept: text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8",
+                "Accept-Language: pt-BR,pt;q=0.8,en-US;q=0.5,en;q=0.3",
+                "Accept-Encoding: gzip, deflate",
+                "Upgrade-Insecure-Requests: 1"
+        ));
+        $options[CURLOPT_POSTFIELDS] = "&site=" . urlencode($site);
+        curl_setopt_array($curl, $options);
+        $verticais = curl_exec($curl);
+        if ((int) curl_errno($curl) > 0) {
+            $info = curl_getinfo($curl);
+            throw new Exception(Zend_Debug::dump($info, "Error ao recuperar vertical.", false));
+        }
+        curl_close($curl);
+        /**
+         * chr(239),chr(187),chr(191) equivale o código de UTF8 WITH BOM: ï»¿ 
+         * que parece no início da string
+         * https://en.wikipedia.org/wiki/Byte_order_mark
+         */
+        $verticais = ltrim($verticais, chr(239) . chr(187) . chr(191));
+        return Zend_Json::decode($verticais);
+    }
+
+    /**
+     * Função que retorna a lista de sites do aloca ip
+     * @return array
+     */
+    public function getAmbientes($site, $vertical) {
+
+        set_time_limit(1200);
+        $curl = curl_init();
+        $options = array(
+            CURLOPT_URL => getenv('ALOCAIP') . "/ApiAlocaIP/Ambiente",
+//            CURLOPT_URL => "http://apialocaip.cetad.caixa/ApiAlocaIP/Ambiente",
+            CURLOPT_RETURNTRANSFER => true,
+            CURLOPT_ENCODING => "",
+            CURLOPT_MAXREDIRS => 10,
+            CURLOPT_TIMEOUT => 30,
+            CURLOPT_HTTP_VERSION => CURL_HTTP_VERSION_1_1,
+            CURLOPT_CUSTOMREQUEST => "POST",
+            CURLOPT_HTTPHEADER => array(
+                "Accept: text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8",
+                "Accept-Language: pt-BR,pt;q=0.8,en-US;q=0.5,en;q=0.3",
+                "Accept-Encoding: gzip, deflate",
+                "Upgrade-Insecure-Requests: 1"
+        ));
+        $options[CURLOPT_POSTFIELDS] = "&site=" . urlencode($site) . "&vertical=" . urlencode($vertical);
+        curl_setopt_array($curl, $options);
+        $ambientes = curl_exec($curl);
+        if ((int) curl_errno($curl) > 0) {
+            $info = curl_getinfo($curl);
+            throw new Exception(Zend_Debug::dump($info, "Error ao recuperar ambientes.", false));
+        }
+        curl_close($curl);
+        /**
+         * chr(239),chr(187),chr(191) equivale o código de UTF8 WITH BOM: ï»¿ 
+         * que parece no início da string
+         * https://en.wikipedia.org/wiki/Byte_order_mark
+         */
+        $ambientes = ltrim($ambientes, chr(239) . chr(187) . chr(191));
+        return Zend_Json::decode($ambientes);
+    }
+
+    /**
+     * Função que retorna a lista de sites do aloca ip
+     * @return array
+     */
+    public function getCategorias($unidade) {
+
+        set_time_limit(1200);
+        $curl = curl_init();
+        $options = array(
+            CURLOPT_URL => getenv('ALOCAIP') . "/ApiAlocaIP/Categoria",
+//            CURLOPT_URL => "http://apialocaip.cetad.caixa/ApiAlocaIP/Categoria",
+            CURLOPT_RETURNTRANSFER => true,
+            CURLOPT_ENCODING => "",
+            CURLOPT_MAXREDIRS => 10,
+            CURLOPT_TIMEOUT => 30,
+            CURLOPT_HTTP_VERSION => CURL_HTTP_VERSION_1_1,
+            CURLOPT_CUSTOMREQUEST => "POST",
+            CURLOPT_HTTPHEADER => array(
+                "Accept: text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8",
+                "Accept-Language: pt-BR,pt;q=0.8,en-US;q=0.5,en;q=0.3",
+                "Accept-Encoding: gzip, deflate",
+                "Upgrade-Insecure-Requests: 1"
+        ));
+        $options[CURLOPT_POSTFIELDS] = "&unidade=" . urlencode($unidade);
+        curl_setopt_array($curl, $options);
+        $categorias = curl_exec($curl);
+        if ((int) curl_errno($curl) > 0) {
+            $info = curl_getinfo($curl);
+            throw new Exception(Zend_Debug::dump($info, "Error ao recuperar categorias.", false));
+        }
+        curl_close($curl);
+        /**
+         * chr(239),chr(187),chr(191) equivale o código de UTF8 WITH BOM: ï»¿ 
+         * que parece no início da string
+         * https://en.wikipedia.org/wiki/Byte_order_mark
+         */
+        $categorias = ltrim($categorias, chr(239) . chr(187) . chr(191));
+        return Zend_Json::decode($categorias);
+    }
+
+    /**
+     * Função que retorna a lista de sites do aloca ip
+     * @return array
+     */
+    public function getRedes($site, $vertical, $ambiente) {
+
+        set_time_limit(1200);
+        $curl = curl_init();
+        $options = array(
+            CURLOPT_URL => getenv('ALOCAIP') . "/ApiAlocaIP/Rede",
+//            CURLOPT_URL => "http://apialocaip.cetad.caixa/ApiAlocaIP/Rede",
+            CURLOPT_RETURNTRANSFER => true,
+            CURLOPT_ENCODING => "",
+            CURLOPT_MAXREDIRS => 10,
+            CURLOPT_TIMEOUT => 30,
+            CURLOPT_HTTP_VERSION => CURL_HTTP_VERSION_1_1,
+            CURLOPT_CUSTOMREQUEST => "POST",
+            CURLOPT_HTTPHEADER => array(
+                "Accept: text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8",
+                "Accept-Language: pt-BR,pt;q=0.8,en-US;q=0.5,en;q=0.3",
+                "Accept-Encoding: gzip, deflate",
+                "Upgrade-Insecure-Requests: 1"
+        ));
+        $options[CURLOPT_POSTFIELDS] = "&site=" . urlencode($site) . "&vertical=" . urlencode($vertical) . "&ambiente=" . urlencode($ambiente);
+        curl_setopt_array($curl, $options);
+        $redes = curl_exec($curl);
+//        Zend_Debug::dump($redes);
+        if ((int) curl_errno($curl) > 0) {
+            $info = curl_getinfo($curl);
+            throw new Exception(Zend_Debug::dump($info, "Error ao recuperar redes.", false));
+        }
+        curl_close($curl);
+        /**
+         * chr(239),chr(187),chr(191) equivale o código de UTF8 WITH BOM: ï»¿ 
+         * que parece no início da string
+         * https://en.wikipedia.org/wiki/Byte_order_mark
+         */
+        $redes = ltrim($redes, chr(239) . chr(187) . chr(191));
+        return Zend_Json::decode($redes);
+    }
+
+    /**
+     * Função que retorna a lista de sites do aloca ip
+     * @return array
+     */
+    public function getGerarIp($site, $vertical, $ambiente, $unidade, $categoria, $descricao, $red_num, $par, $parcriado) {
+
+
+        $curl = curl_init();
+        $options = array(
+            CURLOPT_URL => getenv('ALOCAIP') . "/ApiAlocaIP/Gerar",
+//            CURLOPT_URL => "http://apialocaip.cetad.caixa/ApiAlocaIP/Gerar",
+            CURLOPT_RETURNTRANSFER => true,
+            CURLOPT_ENCODING => "",
+            CURLOPT_MAXREDIRS => 10,
+            CURLOPT_TIMEOUT => 60,
+            CURLOPT_HTTP_VERSION => CURL_HTTP_VERSION_1_1,
+            CURLOPT_CUSTOMREQUEST => "POST",
+            CURLOPT_HTTPHEADER => array(
+                "Accept: text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8",
+                "Accept-Language: pt-BR,pt;q=0.8,en-US;q=0.5,en;q=0.3",
+                "Accept-Encoding: gzip, deflate",
+                "Upgrade-Insecure-Requests: 1"
+        ));
+        $usuario = "C&t@d02";
+        $senha = "@ut0m@c@0!";
+        $options[CURLOPT_POSTFIELDS] = "&id=" . urlencode($usuario) . "&senha=" . urlencode($senha) . "&site=" . urlencode($site) . "&vertical=" . urlencode($vertical) . "&ambiente=" . urlencode($ambiente) . "&unidade=" . urlencode($unidade) . "&categoria=" . urlencode($categoria) . "&descricao=" . urlencode($descricao) . "&red_num=" . urlencode($red_num) . "&par=" . urlencode($par) . "&parCriado=" . urlencode($parcriado);
+//        $options[CURLOPT_POSTFIELDS] = "&site=" . urlencode($site) . "&vertical=" . urlencode($vertical) . "&ambiente=" . urlencode($ambiente) . "&unidade=" . urlencode($unidade) . "&categoria=" . urlencode($categoria) . "&descricao=" . urlencode($descricao) . "&red_num=" . urlencode($red_num) . "&par=" . urlencode($par) . "&parCriado=" . urlencode($parcriado);
+//        $options[CURLOPT_POSTFIELDS] = "&site=" . urlencode($site) . "&vertical=" . urlencode($vertical). "&ambiente=". urlencode($ambiente) . "&unidade=" . urlencode($unidade). "&categoria=" . urlencode($categoria). "&descricao=" . urlencode($descricao). "&red_num=" . urlencode($red_num);
+        curl_setopt_array($curl, $options);
+//        Zend_Debug::dump($options);
+        $ipgerado = curl_exec($curl);
+
+        $httpcode = curl_getinfo($curl, CURLINFO_HTTP_CODE);
+        if ((int) curl_errno($curl) > 0 || $httpcode != 200) {
+            $info = curl_getinfo($curl);
+            $tec_msg = "Http Code: " . $httpcode . "</br>" . Zend_Debug::dump($info, "Error gerar o ip.", false) . "</br>" . $ipgerado;
+            $msg = new Extra_Exception_Mensagem(Extra_Exception_Erros_Erros::ALOCA_IP_ACIONAR_API_CODE, Extra_Exception_Erros_Erros::ALOCA_IP_ACIONAR_API_MSG_USER, $tec_msg);
+            throw new Extra_Exception_Infrasimples(Extra_Exception_Infrasimples::TYPE_ERROR, $msg);
+        }
+        curl_close($curl);
+
+        /**
+         * chr(239),chr(187),chr(191) equivale o código de UTF8 WITH BOM: ï»¿ 
+         * que parece no início da string
+         * https://en.wikipedia.org/wiki/Byte_order_mark
+         */
+        $ipgerado = ltrim($ipgerado, chr(239) . chr(187) . chr(191));
+
+        $ipgerado_arr = Zend_Json::decode($ipgerado);
+
+        if (
+                (
+                is_array($ipgerado_arr) &&
+                array_key_exists('Gerar', $ipgerado_arr) &&
+                array_key_exists(0, $ipgerado_arr["Gerar"])
+                ) &&
+                (
+                !array_key_exists(1, $ipgerado_arr["Gerar"]) ||
+                is_null($ipgerado_arr["Gerar"][1]) ||
+                $ipgerado_arr["Gerar"][1] == "" ||
+                !array_key_exists(2, $ipgerado_arr["Gerar"]) ||
+                is_null($ipgerado_arr["Gerar"][2]) ||
+                $ipgerado_arr["Gerar"][2] == "" ||
+                !array_key_exists(3, $ipgerado_arr["Gerar"]) ||
+                is_null($ipgerado_arr["Gerar"][3]) ||
+                $ipgerado_arr["Gerar"][3] == "" ||
+                !array_key_exists(4, $ipgerado_arr["Gerar"]) ||
+                is_null($ipgerado_arr["Gerar"][4]) ||
+                $ipgerado_arr["Gerar"][4] == "" ||
+                !array_key_exists(5, $ipgerado_arr["Gerar"]) ||
+                is_null($ipgerado_arr["Gerar"][5]) ||
+                $ipgerado_arr["Gerar"][5] == ""
+                )
+        ) {
+            $msg_aloca_ip = $ipgerado_arr["Gerar"][0];
+            $tec_msg = $msg_aloca_ip . Zend_Debug::dump($ipgerado_arr, 'resposta aloca ip', false);
+            $msg = new Extra_Exception_Mensagem(Extra_Exception_Erros_Erros::ALOCA_IP_TRATAR_RESPOSTA_CODE, Extra_Exception_Erros_Erros::ALOCA_IP_TRATAR_RESPOSTA_MSG_USER, $tec_msg);
+            throw new Extra_Exception_Infrasimples(Extra_Exception_Infrasimples::TYPE_ERROR, $msg);
+        } else if (!is_array($ipgerado_arr)) {
+            $tec_msg = "Resposta desconhecida do aloca ip." . Zend_Debug::dump($ipgerado_arr, 'resposta aloca ip', false);
+            $msg = new Extra_Exception_Mensagem(Extra_Exception_Erros_Erros::ALOCA_IP_TRATAR_RESPOSTA_CODE, Extra_Exception_Erros_Erros::ALOCA_IP_TRATAR_RESPOSTA_MSG_USER, $tec_msg);
+            throw new Extra_Exception_Infrasimples(Extra_Exception_Infrasimples::TYPE_ERROR, $msg);
+        }
+        $hostname = $ipgerado_arr["Gerar"][0];
+        $ip_vm = $ipgerado_arr["Gerar"][1];
+        $ip_base_dez = $ipgerado_arr["Gerar"][2];
+        $gateway_vm = $ipgerado_arr["Gerar"][3];
+        $mascara_vm = $ipgerado_arr["Gerar"][4];
+        $vlan = $ipgerado_arr["Gerar"][5];
+        $ipgerado_final = array(
+            "hostname" => $hostname,
+            "ip_vm" => $ip_vm,
+            "ip_base_dez" => $ip_base_dez,
+            "gateway_vm" => $gateway_vm,
+            "mascara_vm" => $mascara_vm,
+            "vlan" => $vlan
+        );
+
+        //Zend_Debug::dump($ipgerado_final, '$ipgerado_final');
+        return $ipgerado_final;
+    }
+
+    /**
+     * 
+     * @param type $co_form
+     * @param type $site
+     * @param type $vertical
+     * @param type $ambiente
+     * @param type $unidade
+     * @param type $categoria
+     * @param type $descricao
+     * @param type $red_num
+     * @param type $par
+     * @param type $parcriado
+     * @param type $ip_vm
+     * @param type $mascara_vm
+     * @param type $gateway_vm
+     * @param type $hostname
+     * @param type $ip_base_dez
+     * @param type $vlan
+     * @return type
+     */
+    public function insereIpAlocado($co_form, $site, $vertical, $ambiente, $unidade, $categoria, $descricao, $red_num, $par, $parcriado, $ip_vm, $mascara_vm, $gateway_vm, $hostname, $ip_base_dez, $vlan) {
+
+        //Zend_Debug::dump(func_get_args(), 'insereIpAlocado');
+        /**
+         * O siistema operacional é equivalente a $categoria
+         * $sistema_op = $categoria;
+         */
+        $sistema_op = strtoupper($categoria);
+
+        $data['ip_vm'] = $ip_vm;
+        $data['mascara_vm'] = $mascara_vm;
+        $data['gateway_vm'] = $gateway_vm;
+        $data['hostname'] = $hostname;
+        $data['status'] = RedeDAO::STATUS_IP_EM_PROCESSAMENTO;
+        $data['co_form'] = $co_form;
+        $data['dt_data_hora_status'] = date('Y-m-d H:i:s');
+        $data['dt_data_hora_alocacao'] = date('Y-m-d H:i:s');
+        $data['sistema_op'] = $sistema_op;
+        $data['site'] = $site;
+        $data['vertical'] = $vertical;
+        $data['ambiente'] = $ambiente;
+        $data['unidade'] = $unidade;
+        $data['categoria'] = $categoria;
+        $data['descricao'] = $descricao;
+        $data['red_num'] = $red_num;
+        $data['par'] = $par;
+        $data['parcriado'] = $parcriado;
+        $data['ip_base_dez'] = $ip_base_dez;
+        $data['vlan'] = $vlan;
+
+        $rede_table = new Rede();
+        $ip_vm = $rede_table->createRow($data)->save();
+        return $ip_vm;
+    }
+
+}
