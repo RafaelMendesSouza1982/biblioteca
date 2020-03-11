@@ -1,0 +1,121 @@
+<script>
+    $(document).ready(function () {
+        $('#tooltip01').tooltipster();
+        $('.tooltip_title').tooltipster();
+    });
+</script>
+<style>
+    .fonts_title{
+        font-size:10px;
+    }
+</style>
+<hr class="mb-4">
+<div class="container-fluids">
+    <div class="bs-docs-example">
+        <table id="example2" class="display" width="100%">                  
+            <thead class="alert alert-info fonts">
+                <tr><p class="fonts_titulo">HISTÓRICO DE INFORMAÇÕES</p></tr>
+            <tr bgcolor="CDCDCD">                           
+                <td style="border-bottom: 1px solid #fff; font-size:14px; padding:10px 5px 10px 5px; width: 30px; text-align: center;">Sistema</td>
+                <td style="border-bottom: 1px solid #fff; font-size:14px; padding:10px 5px 10px 5px; width: 30px; text-align: center;">Status</td>
+                <td style="border-bottom: 1px solid #fff; font-size:14px; padding:10px 5px 10px 5px; width: 30px; text-align: center;">Data Hora</td>
+                <td style="border-bottom: 1px solid #fff; font-size:14px; padding:10px 5px 10px 5px; width: 100px; text-align: center;">Analista</td>
+                <td style="border-bottom: 1px solid #fff; font-size:14px; padding:10px 5px 10px 5px; width: 30px; text-align: center;">Ambiente</td>
+                <td style="border-bottom: 1px solid #fff; font-size:14px; padding:10px 5px 10px 5px; width: 30px; text-align: center;">Turno</td>
+                <td style="border-bottom: 1px solid #fff; font-size:14px; padding:10px 5px 10px 5px; width: 70px; text-align: center;">Rotina</td>
+                <td style="border-bottom: 1px solid #fff; font-size:14px; padding:10px 5px 10px 5px; width: 30px; text-align: center;">Ferramenta</td>
+                <td style="border-bottom: 1px solid #fff; font-size:14px; padding:10px 5px 10px 5px; width: 50px; text-align: center;">Tipo De Serviço</td>
+                <td style="border-bottom: 1px solid #fff; font-size:14px; padding:10px 5px 10px 5px; width: 40px; text-align: center;">Nº Ocorreência</td>
+                <td style="border-bottom: 1px solid #fff; font-size:14px; padding:10px 5px 10px 5px; width: 270px; text-align: center;">Observacao</td>
+                <td style="border-bottom: 1px solid #fff; font-size:14px; padding:10px 0px 10px 0px; width: 15px; text-align: center;"></td>
+                <td style="border-bottom: 1px solid #fff; font-size:14px; padding:10px 0px 10px 0px; width: 15px; text-align: center;"></td>
+                <td style="border-bottom: 1px solid #fff; font-size:14px; padding:10px 0px 10px 0px; width: 15px; text-align: center; "></td>
+                <td style="border-bottom: 1px solid #fff; font-size:14px; padding:10px 5px 10px 5px; width: 30px; text-align: center;"></td>
+            </tr> 
+            <input
+                </thead> 
+            <tbody>
+                <?php
+                if (isset($this->listaAtualizacao)) {
+                    foreach ($this->listaAtualizacao as $geral) {
+                        $classe = $geral['multiplataforma'];
+                        $id_multiplataforma = $classe['id_cadastro'];
+                        $id = $classe['id_cadastro'];
+
+                        echo "<tr>";
+                        echo "<td style='border-bottom: 1px solid #eae8e8; font-size:12px; text-align: center;'>" . $classe['sistema'] . "</td>";
+                        echo "<td style='border-bottom: 1px solid #eae8e8; font-size:12px; text-align: center;'>" . $classe['sistema'] . "</td>";
+                        echo "<td style='border-bottom: 1px solid #eae8e8; font-size:11px; text-align: center;'>" . $classe['status_sistemas'] . "</td>";
+                        echo "<td style='border-bottom: 1px solid #eae8e8; font-size:12px; text-align: center;'>" . date("d/m/Y H:i:s", strtotime($classe['data_hora_inclusao'])) . "</td>";
+                        echo "<td style='border-bottom: 1px solid #eae8e8; font-size:11px; text-align: center;'>" . $classe['responsavel'] . "</td>";
+                        echo "<td style='border-bottom: 1px solid #eae8e8; font-size:11px; text-align: center;'>" . $classe['ambiente'] . "</td>";
+                        echo "<td style='border-bottom: 1px solid #eae8e8; font-size:11px; text-align: center;'>" . $classe['turno'] . "</td>";
+                        echo "<td style='border-bottom: 1px solid #eae8e8; font-size:11px; text-align: center;'>" . $classe['rotina'] . "</td>";
+                        echo "<td style='border-bottom: 1px solid #eae8e8; font-size:11px; text-align: center;'>" . $classe['ferramentas'] . "</td>";
+                        echo "<td style='border-bottom: 1px solid #eae8e8; font-size:12px; text-align: center;'>" . $classe['tipo_servico'] . "</td>";
+                        echo "<td style='border-bottom: 1px solid #eae8e8; font-size:12px; text-align: center;'>" . $classe['num_ocorrencia'] . "</td>";
+                        echo "<td style='border-bottom: 1px solid #eae8e8; font-size:12px; text-align: justify;'>" . $classe['observacoes'] . "</td>";
+                        echo "<td style='border-bottom: 1px solid #eae8e8; text-align: center;'>" . "<a href='/multiplataforma/atualizacao/verificar/id/$id_multiplataforma'>" . "<button title='Visualizar' type='button' class='btn btn-primary btn-sm'><span style='padding:4px;' class='glyphicon glyphicon-search'></span></button>" . "</a></td>";
+                        echo "<td style='border-bottom: 1px solid #eae8e8; text-align: center;'>" . "<a href='/multiplataforma/atualizacao/atualizacao/id/$id_multiplataforma'>" . "<button title='Atualizar' type='button' class='btn btn-info btn-sm'><span style='padding:4px;' class='glyphicon glyphicon-refresh'></span></button>" . "</a></td>";
+                        echo "<td style='border-bottom: 1px solid #eae8e8; text-align: center;'>" . "<a class='aDel' href='excluir/id/$id'>" . "<button title='Excluir' type='button' class='btn btn-danger btn-sm'><span style='padding:4px;' class='glyphicon glyphicon-trash'></span></button>" . "<a/></td>";
+                        echo "<td style='border-bottom: 1px solid #eae8e8; text-align: center;'>" . "<input type='radio' class='input-group-text' aria-label='Text input with checkbox'>" . "</td>";
+                        echo "</tr>";
+                    }
+                }
+                ?>
+            </tbody>
+        </table> 
+    </div> 
+</div>
+<hr class="mb-4">
+<hr class="mb-4">
+<script type="text/javascript">
+    $(document).ready(function () {
+
+        $("#telefone").mask("9999-9999");
+        $("#cpf").mask("999.999.999-99");
+        $("#cep").mask("99999-999");
+        $("#data").mask("99/99/9999");
+        $("#data1").mask("99/99/9999");
+        $("#hora").mask("99:99");
+        $("#hora1").mask("99:99");
+    });
+</script>
+<script type="text/javascript">
+
+    $(document).ready(function () {
+
+        $("div[rel=modal]").click(function (ev) {
+
+            var id_passagem = $(this).attr('id');
+
+            var url = "/index/id/" + id_passagem
+
+            window.open(url);
+
+            // $(window.document.location).attr("href", url); 
+
+        });
+
+
+    });
+</script>
+<script type="text/javascript">
+    $(".aDel").click(function () {
+        if (!confirm("Tem certeza que deseja EXCLUIR!!")) {
+            return false;
+        }
+
+    });
+</script>
+<script type="text/javascript">
+    $(".ativo").click(function () {
+        if (!confirm("Tem certeza que deseja ATIVAR a ATUALIZAÇÃO!!")) {
+            return false;
+        }
+
+    });
+</script>
+
+
+
