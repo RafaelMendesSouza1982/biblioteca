@@ -1,0 +1,134 @@
+<script type="text/javascript" src="<?php echo EXT_PATH . "js/ti_sigcr.js"; ?>"></script>
+<script>
+    $(document).ready(function () {
+        $('.tooltip').tooltipster();
+
+
+    });
+</script>
+<?php
+        $cores_mensais = $this->dados_sigcr['mesInterface'];
+        
+        $tooltip01 = @$cores_mensais['dataSipcs'];
+        $tooltip02 = @$cores_mensais['dataSiban'];
+        $tooltip03 = @$cores_mensais['dataSiapi'];
+        $tooltip04 = @$cores_mensais['dataSiapx'];
+        $tooltip05 = @$cores_mensais['dataSicob'];
+        $tooltip06 = @$cores_mensais['dataSidec'];
+        $tooltip07 = @$cores_mensais['dataSiemp'];
+        $tooltip08 = @$cores_mensais['dataSince'];        
+       
+?> 
+<div style="padding: 0px 0px 5px 15px">
+<a href="<?php echo $this->baseUrl(); ?>/ti">Visão de Ti Principal</a>
+</div>
+<!--<button class="bottom_interface">
+</button>-->
+<?php
+//if (!$this->dados_sigcr) {
+//    $corSipcs = '#fff';
+//    $img1 = 'img/cinzacirc.png';
+//    $img2 = 'img/cinzacirc.png';   
+//} else {
+////  Regras SIGCR.CAIXA #########################################################
+//    if (($this->dados_sigcr['odateSipcs']) != '') {
+//        $corSipcs = '#57B80B';
+//        $msgSipcs = '<b>Verde:</b> Disponível.' . '<br>' . '<b>Vermelho:</b> Indisponível.' . '<br>' . '<b>Branco:</b> Não recebimento da informação de disponibilidade.';
+//    }  
+//    }  
+
+?>
+<style>
+    table thead {
+        /*background-color: #fff;*/
+        font-weight: bold;
+        /*color: #555558;*/
+    }
+    .titulo01{
+        font-size: 18px;
+       font-family: sans-serif;
+        font-variant: initial;
+        font-synthesis: weight;
+    }
+    .titulo02{
+        font-size: 11px;       
+        font-family: sans-serif;
+        color: #666666;
+        font-variant: initial;
+       
+    }
+    table td { 
+        width: 69px;
+        padding-bottom: 3px;
+        padding-top: 3px;
+        margin: 2px 2px 2px 2px;
+        border: 2px solid White;
+        border-radius: 7px;
+    }
+    table tbody td {
+        /*        background-color: #E6E6E6;*/
+        border: 2px solid White;
+        
+        /*color: #555558;*/
+    }
+    table tr {
+        padding: 2px 2px 2px 2px; margin: 2px 2px 2px 2px;
+        border: 2px solid White;
+    }
+
+</style>
+
+<div style="height:800px;">
+   
+        <div class="graficoGrandeB boxShadow redondo10">
+            <div id="relatorio2" class="graficoInternoNegocio" >
+                <table width="100%" class="dataTable">
+                    <thead>
+                        <tr>
+                            <th style="background-color:#fff;" colspan="31"><center><span class="titulo01">Transmissão de Interfaces para o SIGCR</span><br>
+                        <span class="titulo02">por Data do Movimento</span></center><br></th>                           
+                        </tr>                        
+                        <tr>
+                        <th rowspan="2">SISTEMAS</th>                                        
+                        </tr>
+                        <tr>              
+                           <?php     
+                           $valores_mensais = $this->dados_sigcr['mesInterface'];                           
+                            foreach ($valores_mensais as $k => $dados) {                                
+                                echo "<th style='text-align:center;'>" . "" . $k . "</th>";
+                            }                            
+                            ?>
+                        </tr>    
+                    </thead>
+                    <tbody>
+                         <?php      
+                         $feriado =  new Extra_Calendario_Feriado(date('Y-m-d', strtotime($this->mes_ano_dia . '-60day')), date('Y-m-d', strtotime($this->mes_ano_dia . '+60day')));
+                         foreach ($this->sistemas_interfaces as $SIGLA => $Sigla): ?>
+                        <tr>                        
+                            <td style="width: 50px;"><center><?php echo $SIGLA; ?></center></td>  
+                            <?php             
+                            foreach ($valores_mensais as $k => $array_ordenado) {
+                                $data = $this->mes_ano . "-" . str_pad((int) $k, 2, "0", STR_PAD_LEFT);
+                                $fim_de_semana = Extra_Util_Data::isFimDeSemana($data);
+                                $odate = @$array_ordenado["odate$Sigla"];
+
+                                if ($fim_de_semana == TRUE) {
+                                    echo "<td style='background-color:#808080; width: 50px;'></td>";
+                                } elseif ($feriado->isFeriado($data)) {
+                                    echo "<td style='background-color:#808080; width: 50px;'></td>";
+                                } elseif ($odate == '') { ?>
+                                    <td class="tooltip" title="<?php echo "Interface não recebida"; ?>" style='background-color:#fff; width: 50px;'></td>
+                                    <?php
+                                } else {?>
+                                    <td class="tooltip" title="<?php echo "Data / Horário de Entrega: ".$array_ordenado["data$Sigla"]; ?>" style='background-color:#99cc00; font-size:8px;'></td>
+                                    <?php
+                                }
+                            }
+                        ?>
+                        </tr>  
+                        <?php endforeach; ?>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+</div>
