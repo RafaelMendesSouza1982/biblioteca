@@ -1,51 +1,847 @@
 <?php
 
-class AuthController extends Zend_Controller_Action {
+class VmController extends Zend_Controller_Action {
 
-//    public function authAction() {
-//
-//        $this->_helper->layout->disableLayout();
-//        $this->getResponse()->setHeader('WWW-Authenticate', 'Basic realm="Bem vindo.');
-//        //Estabelece o código de resposta 401 caso o usuário selecione o botão cancelar
-//        $this->getResponse()->setHttpResponseCode(401);
-//    }
+    public function init() {
+        Zend_Loader::loadClass('VmDAO');
+        Zend_Loader::loadClass('UtilDAO');
+        $this->initView();
+        $this->view->baseUrl = $this->_request->getBaseUrl();
 
-    public function authAction() {
+        if (!(strstr(__FILE__, 'C:') === FALSE)) {
+//            putenv("JENKINS_TOKEN=cDc0NzgxNzpUZW50YTcweA==");
+//            putenv("JENKINS_TOKEN=DSyKHYrtmNExk_8DV7fo==");
+//            putenv("JENKINS_TOKEN=DSyKHYrtmNExk_8DV7fo");
+            putenv("JENKINS_TOKEN=U1ZNU0JQMDE6aDZyYjI4Nng=");
+            putenv("JENKINS_URL=http://jenkins-infrasimples.produtos.caixa");
+//            putenv("ALOCAIP=http://apialocaip.cetad.caixa"); //pprodução
+            putenv("ALOCAIP=http://des.apialocaip.cetad.caixa"); //desenvolvimento
+            putenv("ORCHESTRATOR_URL=http://CBRNPAPLNT001.intra.caixa.gov.br"); //orchestrator
+        }
+//        Zend_Debug::dump(getenv('ALOCAIP'));
+//        Zend_Debug::dump(getenv('JENKINS_URL'));
+//        exit;
+    }
 
-//        $this->_helper->layout->disableLayout();
-//        $this->getResponse()->setHeader('WWW-Authenticate', 'Basic realm="Bem vindo.');
-        //Estabelece o código de resposta 401 caso o usuário selecione o botão cancelar
-//        $this->getResponse()->setHttpResponseCode(401);
-        $this->_helper->layout->setLayout('login');
+    function preDispatch() {
+        
+    }
+
+    public function indexAction() {
+
+        $this->_helper->layout->disableLayout();
+        $this->_helper->viewRenderer->setNoRender(true);
+        $this->render('capacidade');
+    }
+
+    public function criarvmAction() {
+        set_time_limit(1200);
+        $auth = Zend_Auth::getInstance();
+        $autenticate = new Extra_Auth_Adapter_Ldap($auth->getInstance()->getIdentity(), null);
+        $info = $autenticate->getUserData();
+        $vmDao = new VmDAO();
+        $unidade = $autenticate->getUserDataKey("co-unidade");
+        $this->view->unidade = $unidade[0];
+        $options = array('type' => 'add');
+        $vm_form = new VmForm($options);
+        $this->view->vm_form = $vm_form;
+        $this->_helper->layout->setLayout('inicial');
+
+//        $co_runbook = $vmDao->orchestrator_status();
+    }
+
+    public function criarldomAction() {
+        set_time_limit(1200);
+        $auth = Zend_Auth::getInstance();
+        $vmDao = new VmDAO();
+        $redeDao = new RedeDAO();
+        $autenticate = new Extra_Auth_Adapter_Ldap($auth->getInstance()->getIdentity(), null);
+        $info = $autenticate->getUserData();
+        $nome = $autenticate->getUserDataKey("cn");
+        $matricula = $autenticate->getUserDataKey("co-usuario");
+        $this->view->usuario = $nome[0];
+        $this->view->matricula = $matricula[0];
+        $this->_helper->layout->setLayout('inicial');
+        $this->view->var_cd_ifs = '19';
+
+
+        $co_form = $vmDao->provisonarCodigoDoForm();
+        $var_cd_ifs = $co_form;
+
+        $v = new RedeLdomDAO();
+        $res = $v->statusIp();
+
+        if (empty($res)) {
+            $msg_erro = "Sem disponibilidade de IP, Mascara, Gateway";
+            $this->view->msg_ip = $msg_erro;
+        }
+
+        $this->render('criarldom');
+    }
+
+    public function listarvmAction() {
+        set_time_limit(1200);
+        $auth = Zend_Auth::getInstance();
+        $autenticate = new Extra_Auth_Adapter_Ldap($auth->getInstance()->getIdentity(), null);
+        $info = $autenticate->getUserData();
+        $nome = $autenticate->getUserDataKey("cn");
+        $unidade = $autenticate->getUserDataKey("co-unidade");
+        $this->view->unidade = $unidade[0];
+        $matricula = $autenticate->getUserDataKey("co-usuario");
+        $this->view->usuario = $nome[0];
+        $this->view->matricula = $matricula[0];
+        $this->_helper->layout->setLayout('inicial');
+        $this->_helper->viewRenderer->setNoRender(false);
+
+        $listaVm = new ListarDAO();
+
+        $vm = $listaVm->listarVm();
+
+        $this->view->listarvm = $vm;
+
+        $this->render('listarvm');
+    }
+
+    public function listarlogAction() {
+        set_time_limit(1200);
+        $auth = Zend_Auth::getInstance();
+
+        $autenticate = new Extra_Auth_Adapter_Ldap($auth->getInstance()->getIdentity(), null);
+        $info = $autenticate->getUserData();
+        $nome = $autenticate->getUserDataKey("cn");
+        $matricula = $autenticate->getUserDataKey("co-usuario");
+        $unidade = $autenticate->getUserDataKey("co-unidade");
+        $this->view->unidade = $unidade[0];
+        $this->view->usuario = $nome[0];
+        $this->view->matricula = $matricula[0];
+        $this->_helper->layout->setLayout('inicial');
+        $this->_helper->viewRenderer->setNoRender(false);
+
+        $listaVm = new ListarDAO();
+        $log = $listaVm->listarLog();
+
+        $this->view->listarlog = $log;
+
+        $this->render('listarlog');
+    }
+
+    public function listarlogerrosAction() {
+        set_time_limit(1200);
+        $auth = Zend_Auth::getInstance();
+        $db = Zend_Db_Table_Abstract::getDefaultAdapter();
+        $autenticate = new Extra_Auth_Adapter_Ldap($auth->getInstance()->getIdentity(), null);
+        $info = $autenticate->getUserData();
+        $nome = $autenticate->getUserDataKey("cn");
+        $matricula = $autenticate->getUserDataKey("co-usuario");
+        $unidade = $autenticate->getUserDataKey("co-unidade");
+        $this->view->unidade = $unidade[0];
+        $this->view->usuario = $nome[0];
+        $this->view->matricula = $matricula[0];
+        $this->_helper->layout->setLayout('inicial');
+        $this->_helper->viewRenderer->setNoRender(false);
+
+        $idErro = $_POST['co_log'];
+
+
+        $resultados = array();
+        $sql01 = "SELECT  ifstb003.tecmsg
+                    FROM ifs.ifstb003_log_aplicacao ifstb003
+                    where ifstb003.co_log = :id_erro";
+        $resultados = $db->fetchAll($sql01, [':id_erro' => $idErro]);
+
+        $this->view->listarlogerros = $resultados;
+
+        $this->render('listarlogerros');
+    }
+
+    public function listarpergAction() {
+        set_time_limit(1200);
+        $auth = Zend_Auth::getInstance();
+        $autenticate = new Extra_Auth_Adapter_Ldap($auth->getInstance()->getIdentity(), null);
+        $info = $autenticate->getUserData();
+        $nome = $autenticate->getUserDataKey("cn");
+        $matricula = $autenticate->getUserDataKey("co-usuario");
+        $unidade = $autenticate->getUserDataKey("co-unidade");
+        $this->view->usuario = $nome[0];
+        $this->view->unidade = $unidade[0];
+        $this->view->matricula = $matricula[0];
+        $this->_helper->layout->setLayout('inicial');
+        $this->_helper->viewRenderer->setNoRender(false);
+        $listarPerg = new ListarDAO();
+
+        $perg = $listarPerg->listarPerg();
+
+        $this->view->listarperg = $perg;
+
+
+        $this->render('listarperg');
+    }
+
+    public function acessojenkinsvmAction() {
+        set_time_limit(1200); //10 minutos
+        $vmDao = new VmDAO();
+        $rede_dao = new RedeDAO();
+        $this->_helper->layout->setLayout('inicial');
+
+//      ////// Dados do usuario ///////////////////////////////////////////////
+        $auth = Zend_Auth::getInstance();
+        $autenticate = new Extra_Auth_Adapter_Ldap($auth->getInstance()->getIdentity(), null);
+        $matricula = $autenticate->getUserDataKey("co-usuario");
+        $res_usuario = strtoupper($matricula[0]);
+//      ///////////////////////////////////////////////////////////////////////  
         if ($this->getRequest()->isPost()) {
             $data = $this->getRequest()->getPost();
-            $auth = Zend_Auth::getInstance();
-            $autenticate = new Extra_Auth_Adapter_Ldap($data['user'], $data['pass']);
-            $result = $auth->authenticate($autenticate);
-            if (!$result->isValid()) {
-                $this->view->msg_error = 'Nome de Usuário ou Senha está Incorreto.';
+
+            $options = array('type' => 'add');
+            $vm_form = new VmForm($options);
+
+            $vm_form->preparaValidacaoElementosDinamicos($data);
+//            Zend_Debug::dump($vm_form);
+//            exit();
+            if ($vm_form->isValid($data)) {
+
+                $var_vcenter_username = "s725914";
+                $var_vcenter_password = "JY2h5Y6n3r";
+
+                if (isset($data['var_vcenter_datacenter'])) {
+                    $var_vcenter_datacenter = $data['var_vcenter_datacenter'];
+                }
+                if (isset($data['var_vm_memory_mb'])) {
+                    $var_vm_memory_mb = $data['var_vm_memory_mb'];
+                }
+                if (isset($data['var_vm_cpus'])) {
+                    $var_vm_cpus = $data['var_vm_cpus'];
+                }
+                if (isset($data['var_vcenter_cluster'])) {
+                    $var_vcenter_cluster = $data['var_vcenter_cluster'];
+                }
+                if (isset($data['descricao'])) {
+                    $var_vm_annotation = "[InfraSimples]: " . $data['descricao'];
+                    $annotation = $data['descricao'];
+                }
+
+                $this->view->var_vm_cpus = $var_vm_cpus;
+                $this->view->var_vm_memory_mb = $var_vm_memory_mb;
+                $this->view->var_vcenter_username = $var_vcenter_username;
+                $this->view->var_vcenter_password = $var_vcenter_password;
+                $this->view->var_vm_annotation = $annotation;
+
+
+                //            Zend_Debug::dump($data);
+                //            exit;
+                /**
+                 * Provisiona o código do form
+                 */
+                $co_form = $vmDao->provisonarCodigoDoForm();
+                $this->view->var_cd_ifs = $co_form;
+
+                $site = $data['site'];
+                $vertical = $data['vertical'];
+                $ambiente = $data['ambiente'];
+                $rede = Zend_Json::decode($data['rede']);
+                $unidade = $data['unidade'];
+                $categoria = $data['categoria'];
+                $descricao = $data['descricao'];
+                $red_num = $rede['red_num'];
+                $par = RedeDAO::CODIGO_ALOCA_PARAMETRO_PAR;
+                $parcriado = RedeDAO::CODIGO_ALOCA_PARAMETRO_PAR_CRIADO;
+
+                try {
+                    $resultado = $rede_dao->getGerarIp($site, $vertical, $ambiente, $unidade, $categoria, $descricao, $red_num, $par, $parcriado);
+
+                    $alocaip_site = $site;
+                    $alocaip_vertical = $vertical;
+                    $alocaip_ambiente = $ambiente;
+                    $alocaip_rede = $rede["red"];
+                    $alocaip_unidade = $unidade;
+                    $alocaip_categoria = $categoria;
+                    switch ($alocaip_vertical) {
+                        case ($alocaip_vertical == 'Servicos Comuns'):
+                            $alocaip_vertical_res = 'Serviços Comuns';
+                            break;
+                        case ($alocaip_vertical == 'Homologacao'):
+                            $alocaip_vertical_res = 'Homologação';
+                            break;
+                        case ($alocaip_vertical == 'Vertical Nao PCN'):
+                            $alocaip_vertical_res = 'Vertical Não PCN';
+                            break;
+                    }
+                    $this->view->alocaip_site = $alocaip_site;
+                    $this->view->alocaip_vertical = $alocaip_vertical;
+                    $this->view->alocaip_ambiente = $alocaip_ambiente;
+                    $this->view->alocaip_rede = $alocaip_rede;
+                    $this->view->alocaip_unidade = $alocaip_unidade;
+                    $this->view->alocaip_categoria = $alocaip_categoria;
+
+                    $hostname = $resultado['hostname'];
+                    $ip_vm = $resultado['ip_vm'];
+                    $ip_base_dez = $resultado['ip_base_dez'];
+                    $gateway_vm = $resultado['gateway_vm'];
+                    $mascara_vm = $resultado['mascara_vm'];
+                    $vlan = $resultado['vlan'];
+
+                    switch ($alocaip_ambiente) {
+                        case ($alocaip_ambiente == 'Apresentacao'):
+                            $alocaip_ambiente = 'Apresentação';
+                            break;
+                        case ($alocaip_ambiente == 'Aplicacao'):
+                            $alocaip_ambiente = 'Aplicação';
+                            break;
+                        case ($alocaip_ambiente == 'Homologacao'):
+                            $alocaip_ambiente = 'Homologação';
+                            break;
+                        case ($alocaip_ambiente == 'Producao'):
+                            $alocaip_ambiente = 'Produção';
+                            break;
+                    };
+
+                    $rede_dao->insereIpAlocado($co_form, $site, $vertical, $ambiente, $unidade, $categoria, $descricao, $red_num, $par, $parcriado, $ip_vm, $mascara_vm, $gateway_vm, $hostname, $ip_base_dez, $vlan);
+
+                    $ip_jenkins = $ip_vm;
+                    $mascara_jenkins = $mascara_vm;
+                    $gateway_jenkins = $gateway_vm;
+                    $hostname_jenkins = $hostname;
+                    $vlan_jenkins = $vlan;
+                } catch (Exception $exc) {
+
+
+                    $vmDao->setStatusForm($co_form, VmDAO::FALHA);
+                    if (isset($co_form) && isset($ip_vm) && isset($ip_base_dez)) {
+                        $rede_dao->desalocarIp($co_form, $ip_vm, $ip_base_dez);
+                    }
+
+                    if ($exc instanceof Extra_Exception_Infrasimples) {
+                        (!isset($co_form)) ? ($co_form = null) : ('');
+                        (!isset($ip_vm)) ? ($ip_vm = null) : ('');
+                        $data_log = new Extra_Exception_Log_Vm($co_form, $ip_vm);
+                        $exc->addLogData($data_log);
+                        $exc->saveLog();
+                        //                    $msg['erro'] = $exc->getFinalUserMsg() . ' --- ' . $exc->getTecMsg(). ' --- ' . $exc->getTraceAsString();
+                        $msg['erro'] = $exc->getFinalUserMsg();
+                        $this->view->msg = $msg;
+                    } else {
+                        $tec_msg = $exc->getMessage();
+                        $msg = new Extra_Exception_Mensagem($exc->getCode(), Extra_Exception_Erros_Erros::ERRRO_DESCONHECIDO_MSG_USER, $tec_msg);
+                        $exc_generica = new Extra_Exception_Infrasimples(Extra_Exception_Infrasimples::TYPE_ERROR, $msg, $exc);
+                        (!isset($co_form)) ? ($co_form = null) : ('');
+                        (!isset($ip_vm)) ? ($ip_vm = null) : ('');
+                        $data_log = new Extra_Exception_Log_Vm($co_form, $ip_vm);
+                        $exc_generica->addLogData($data_log);
+                        $exc_generica->saveLog();
+                        $msg_tela['erro'] = $exc_generica->getFinalUserMsg();
+                        //                    $msg_tela['erro'] = nl2br($exc_generica->getFinalUserMsg() . ' --- ' . $exc_generica->getTecMsg().' --- '.$exc->getFile(). '('.$exc->getLine()).")". ' --- ' . $exc->getTraceAsString(). '---- ';
+                        $this->view->msg = $msg_tela;
+                    }
+                    /**
+                     * Para a execução aqui, pois deu erro com o comando (return)
+                     */
+                    return;
+                }
+
+                $var_vm_disks = "[{'size_gb':'100','type':'thin','datastore':'7259CLUNPRD004_DS_CLUSTER01_HW'}]";
+                $var_vm_datastore = "7259CLUNPRD004_DS_CLUSTER01_HW";
+                $var_cd_ifs = $co_form;
+
+                $res_formulario = '{"parameter":[{"name":"var_vcenter_hostname","value":"vcenter.ad.caixa"},{"name":"var_vcenter_username","value":"' . $var_vcenter_username . '"},{"name":"var_vcenter_password","value":"' . $var_vcenter_password . '"},{"name":"var_vcenter_datacenter","value":"CEPTIBR"},{"name":"var_vcenter_cluster","value":"7259CLUNPRD004"},{"name":"var_vcenter_folder","value":"/CEPTIBR21/vm/"},{"name":"var_vm_state","value":"poweredon"},{"name":"var_vm_memory_mb","value":"' . $var_vm_memory_mb . '"},{"name":"var_vm_cpus","value":"2"},{"name":"var_vm_scsi","value":"paravirtual"},{"name":"var_vm_name_net","value":"' . $vlan_jenkins . '"},{"name":"var_vm_ip","value":"' . $ip_jenkins . '"},{"name":"var_vm_netmask","value":"' . $mascara_jenkins . '"},{"name":"var_vm_gateway","value":"' . $gateway_jenkins . '"},{"name":"var_vm_net_type","value":"static"},{"name":"var_vm_start_connected","value":"yes"},{"name":"var_vm_template","value":"Template_CentOS_Geral_CEPTIBR"},{"name":"var_vm_wait_ip","value":"yes"},{"name":"var_vm_backup_name_net","value":"10.122.16.0%2f20-VLAN10-BKP-7259CLUNPRD004"},{"name":"var_vm_hostname","value":"' . $hostname_jenkins . '"},{"name":"var_vm_dns1","value":"10.192.32.50"},{"name":"var_vm_dns2","value":"10.192.32.51"},{"name":"var_vm_domain","value":"intra.caixa.gov.br"},{"name":"var_vm_puppet_ip","value":"10.122.154.13"},{"name":"var_vm_puppet_hostname","value":"cbrsvaprlx018.intra.caixa.gov.br"},{"name":"var_vm_puppet_username","value":"USUARIO"},{"name":"var_vm_puppet_password","value":"SENHA_PUPPET"},{"name":"var_vm_user","value":"root"},{"name":"var_vm_passwd","value":"123456"},{"name":"var_vm_annotation","value":"' . $var_vm_annotation . '"},{"name":"var_vm_disk_additional","value":"false"},{"name":"var_vm_puppet_group","value":"24"},{"name":"var_vm_name_net","value":"10.192.230.0%2f23-VLAN296-NPRD-7259CLUNPRD004"},{"name":"var_vm_backup_network","value":"false"},{"name":"var_vm_backup_netmask","value":"255.255.240.0"},{"name":"var_vm_backup_network_connected","value":"true"},{"name":"var_vm_backup_ip","value":"10.122.16.10"},{"name":"var_vm_disks","value":"' . $var_vm_disks . '"},{"name":"var_vm_delete","value":"false"},{"name":"var_vm_datastore","value":"' . $var_vm_datastore . '"},{"name":"var_cd_ifs","value":"' . $var_cd_ifs . '"},{"name":"var_site","value":"vmware-ctc"},{"name":"var_platform","value":"Linux"},{"name":"var_L_matriz","value":"10.222.64.63"},{"name":"var_L_ldomname","value":"teste001"},{"name":"var_vm_cpus","value":"' . $var_vm_cpus . '"},{"name":"var_vm_memory_mb","value":"' . $var_vm_memory_mb . '"},{"name":"var_vm_vlan_id","value":"' . $vlan_jenkins . '"},{"name":"alocaip_site","value":"' . $alocaip_site . '"},{"name":"alocaip_vertical","value":"' . $alocaip_vertical . '"},{"name":"alocaip_ambiente","value":"' . $alocaip_ambiente . '"},{"name":"alocaip_rede","value":"' . $alocaip_rede . '"},{"name":"alocaip_unidade","value":"' . $alocaip_unidade . '"},{"name":"alocaip_categoria","value":"' . $alocaip_categoria . '"}]}';
+                $connect_jenkins = rawurlencode($res_formulario);
+
+
+                try {
+                    $msg_envio_jenkins = $vmDao->jenkins($connect_jenkins);
+                    $vmDao->setStatusForm($co_form, VmDAO::ENVIADO);
+                } catch (Exception $exc) {
+
+                    $vmDao->setStatusForm($co_form, VmDAO::FALHA);
+                    if (isset($co_form) && isset($ip_vm) && isset($ip_base_dez)) {
+                        $rede_dao->desalocarIp($co_form, $ip_vm, $ip_base_dez);
+                    }
+
+                    if ($exc instanceof Extra_Exception_Infrasimples) {
+                        (!isset($co_form)) ? ($co_form = null) : ('');
+                        (!isset($ip_vm)) ? ($ip_vm = null) : ('');
+                        $data_log = new Extra_Exception_Log_Vm($co_form, $ip_vm);
+                        $exc->addLogData($data_log);
+                        $exc->saveLog();
+                        //                    $msg['erro'] = $exc->getFinalUserMsg() . ' --- ' . $exc->getTecMsg(). ' --- ' . $exc->getTraceAsString();
+                        $msg['erro'] = $exc->getFinalUserMsg();
+                        $this->view->msg = $msg;
+                    } else {
+                        $tec_msg = $exc->getMessage();
+                        $msg = new Extra_Exception_Mensagem($exc->getCode(), Extra_Exception_Erros_Erros::ERRRO_DESCONHECIDO_MSG_USER, $tec_msg);
+                        $exc_generica = new Extra_Exception_Infrasimples(Extra_Exception_Infrasimples::TYPE_ERROR, $msg, $exc);
+                        (!isset($co_form)) ? ($co_form = null) : ('');
+                        (!isset($ip_vm)) ? ($ip_vm = null) : ('');
+                        $data_log = new Extra_Exception_Log_Vm($co_form, $ip_vm);
+                        $exc_generica->addLogData($data_log);
+                        $exc_generica->saveLog();
+                        $msg_tela['erro'] = $exc_generica->getFinalUserMsg();
+                        //                    $msg_tela['erro'] = nl2br($exc_generica->getFinalUserMsg() . ' --- ' . $exc_generica->getTecMsg().' --- '.$exc->getFile(). '('.$exc->getLine()).")". ' --- ' . $exc->getTraceAsString(). '---- ';
+                        $this->view->msg = $msg_tela;
+                    }
+                    /**
+                     * Para a execução aqui, pois deu erro com o comando (return)
+                     */
+                    return;
+                }
+
+
+                try {
+                    /**
+                     * Espera 4 segundos para dar tempo para o jenkins gerar o
+                     * código da build
+                     */
+                    sleep(4);
+                    /**
+                     * Procura o código da build por 120 vezes e espera por um segundo
+                     * a cada tentativa.
+                     * Isso pode demorar até 120 segundos.
+                     */
+                    $co_build = $vmDao->procuraCodigoDaBuildDoFormPorNvezes($co_form);
+                    $vmDao->vinculaCodigoDaBuildDoForm($co_form, $co_build);
+                } catch (Exception $exc) {
+                    $vmDao->setStatusForm($co_form, VmDAO::CODIGO_BUILD_PENDENTE);
+                    if ($exc instanceof Extra_Exception_Infrasimples) {
+                        (!isset($co_form)) ? ($co_form = null) : ('');
+                        (!isset($ip_vm)) ? ($ip_vm = null) : ('');
+                        $data_log = new Extra_Exception_Log_Vm($co_form, $ip_vm);
+                        $exc->addLogData($data_log);
+                        $exc->saveLog();
+                        //                    $msg['erro'] = $exc->getFinalUserMsg() . ' --- ' . $exc->getTecMsg(). ' --- ' . $exc->getTraceAsString();
+                        $msg['erro'] = $exc->getFinalUserMsg();
+                        $this->view->msg = $msg;
+                    } else {
+                        $tec_msg = $exc->getMessage();
+                        $msg = new Extra_Exception_Mensagem($exc->getCode(), Extra_Exception_Erros_Erros::ERRRO_DESCONHECIDO_MSG_USER, $tec_msg);
+                        $exc_generica = new Extra_Exception_Infrasimples(Extra_Exception_Infrasimples::TYPE_ERROR, $msg, $exc);
+                        (!isset($co_form)) ? ($co_form = null) : ('');
+                        (!isset($ip_vm)) ? ($ip_vm = null) : ('');
+                        $data_log = new Extra_Exception_Log_Vm($co_form, $ip_vm);
+                        $exc_generica->addLogData($data_log);
+                        $exc_generica->saveLog();
+                        $msg_tela['erro'] = $exc_generica->getFinalUserMsg();
+                        $this->view->msg = $msg_tela;
+                    }
+                    /**
+                     * Para a execução aqui, pois deu erro com o comando (return)
+                     */
+                    return;
+                }
+
+
+                $msg['sucesso'] = "Iniciada criação do Servidor.";
+                $this->view->msg = $msg;
             } else {
-                $this->_redirect('index');
+                $vm_form->populate($options);
+                $this->view->vm_form = $vm_form;
+                $this->render('criarvm');
+                return;
             }
         }
     }
 
-    public function authorizeAction() {
-        $this->_redirect('index');
-    }
-
-    public function logoutAction() {
+    public function acessorchestratorvmAction() {
+        set_time_limit(1200); //10 minutos
+        $vmDao = new VmDAO();
+        $rede_dao = new RedeDAO();
+        $this->_helper->layout->setLayout('inicial');
+//      ////// Dados do usuario ///////////////////////////////////////////////
         $auth = Zend_Auth::getInstance();
-        $auth->clearIdentity();
-        Zend_Session::destroy();
-        $this->_helper->redirector('index');
+        $autenticate = new Extra_Auth_Adapter_Ldap($auth->getInstance()->getIdentity(), null);
+        $matricula = $autenticate->getUserDataKey("co-usuario");
+        $res_usuario = strtoupper($matricula[0]);
+//      ///////////////////////////////////////////////////////////////////////  
+        if ($this->getRequest()->isPost()) {
+
+            $data = $this->getRequest()->getPost();
+            $options = array('type' => 'add');
+            $vm_form = new VmForm($options);
+            $vm_form->preparaValidacaoElementosDinamicos($data);
+            if ($vm_form->isValid($data)) {
+                $login_orchestrator = "s725914";
+                $senha_orchestrator = "JY2h5Y6n3r";
+                $resourcepool = "CEPTIBR/host/7259CLUNPRD004/Resources";
+                $host = "/CEPTIBR/host/7259CLUNPRD004/cbrsvgersh008.intra.caixa.gov.br";
+                $datacenter = "CEPTIBR";
+                $template = "Template_win2016_ORCH_7259";
+                $vmfolder = "/CEPTIBR/vm";
+                $sourcetemplate = "/CEPTIBR/vm/Templates/Windows";
+                $dnsserver = "10.122.178.9, 10.122.178.11";
+                $vcenter = "cadsvgerap005-1.intra.caixa.gov.br";
+                $domain = "extra.caixa.gov.br";
+                $datastore = "[7259CLUNPRD004_HW_DS02]";
+
+                if (isset($data['var_vcenter_datacenter'])) {
+                    $var_vcenter_datacenter = $data['var_vcenter_datacenter'];
+                }
+                if (isset($data['var_vm_memory_mb'])) {
+                    $var_vm_memory_mb = $data['var_vm_memory_mb'];
+                }
+                if (isset($data['var_vm_cpus'])) {
+                    $var_vm_cpus = $data['var_vm_cpus'];
+                }
+                if (isset($data['var_vcenter_cluster'])) {
+                    $var_vcenter_cluster = $data['var_vcenter_cluster'];
+                }
+                if (isset($data['descricao'])) {
+                    $var_vm_annotation = "[InfraSimples]: " . $data['descricao'];
+                    $annotation = $data['descricao'];
+                }
+
+                $this->view->var_vm_cpus = $var_vm_cpus;
+                $this->view->var_vm_memory_mb = $var_vm_memory_mb;
+                $this->view->var_vm_annotation = $annotation;
+                /**
+                 * Provisiona o código do form
+                 */
+                $co_form = $vmDao->provisonarCodigoDoForm();
+                $this->view->co_form = $co_form;
+                $site = $data['site'];
+                $vertical = $data['vertical'];
+                $ambiente = $data['ambiente'];
+                $rede = Zend_Json::decode($data['rede']);
+                $unidade = $data['unidade'];
+                $categoria = $data['categoria'];
+                $descricao = $data['descricao'];
+                $red_num = $rede['red_num'];
+                $par = RedeDAO::CODIGO_ALOCA_PARAMETRO_PAR;
+                $parcriado = RedeDAO::CODIGO_ALOCA_PARAMETRO_PAR_CRIADO;
+
+                try {
+                    $resultado = $rede_dao->getGerarIp($site, $vertical, $ambiente, $unidade, $categoria, $descricao, $red_num, $par, $parcriado);
+                    $alocaip_site = $site;
+                    $alocaip_vertical = $vertical;
+                    $alocaip_ambiente = $ambiente;
+                    $alocaip_rede = $rede["red"];
+                    $alocaip_unidade = $unidade;
+                    $alocaip_categoria = $categoria;
+                    switch ($alocaip_vertical) {
+                        case ($alocaip_vertical == 'Servicos Comuns'):
+                            $alocaip_vertical_res = 'Serviços Comuns';
+                            break;
+                        case ($alocaip_vertical == 'Homologacao'):
+                            $alocaip_vertical_res = 'Homologação';
+                            break;
+                        case ($alocaip_vertical == 'Vertical Nao PCN'):
+                            $alocaip_vertical_res = 'Vertical Não PCN';
+                            break;
+                    }
+                    $this->view->alocaip_site = $alocaip_site;
+                    $this->view->alocaip_vertical = $alocaip_vertical;
+                    $this->view->alocaip_ambiente = $alocaip_ambiente;
+                    $this->view->alocaip_rede = $alocaip_rede;
+                    $this->view->alocaip_unidade = $alocaip_unidade;
+                    $this->view->alocaip_categoria = $alocaip_categoria;
+
+                    $hostname = $resultado['hostname'];
+                    $ip_vm = $resultado['ip_vm'];
+                    $ip_base_dez = $resultado['ip_base_dez'];
+                    $gateway_vm = $resultado['gateway_vm'];
+                    $mascara_vm = $resultado['mascara_vm'];
+                    $vlan = $resultado['vlan'];
+                    switch ($alocaip_ambiente) {
+                        case ($alocaip_ambiente == 'Apresentacao'):
+                            $alocaip_ambiente = 'Apresentação';
+                            break;
+                        case ($alocaip_ambiente == 'Aplicacao'):
+                            $alocaip_ambiente = 'Aplicação';
+                            break;
+                        case ($alocaip_ambiente == 'Homologacao'):
+                            $alocaip_ambiente = 'Homologação';
+                            break;
+                        case ($alocaip_ambiente == 'Producao'):
+                            $alocaip_ambiente = 'Produção';
+                            break;
+                    };
+                    $rede_dao->insereIpAlocado($co_form, $site, $vertical, $ambiente, $unidade, $categoria, $descricao, $red_num, $par, $parcriado, $ip_vm, $mascara_vm, $gateway_vm, $hostname, $ip_base_dez, $vlan);
+                    $ip_orchestrator = $ip_vm;
+                    $mascara_orchestrator = $mascara_vm;
+                    $gateway_orchestrator = $gateway_vm;
+                    $hostname_orchestrator = $hostname;
+                    $redes_orchestrator = $rede['red'] . "/" . $rede['BM'];
+                    if ($redes_orchestrator == "10.192.220.0/23") {/* DES - Apresentação */
+                        $vlan_orchestrator = "10.192.224.0/23-VLAN294-Apres-7259CLUNPRD004";
+                    } else if ($redes_orchestrator == "10.192.222.0/23") {/* DES - Aplicação */
+                        $vlan_orchestrator = "10.192.222.0/23-VLAN292-NPRD-7259CLUNPRD004";
+                    } else if ($redes_orchestrator == "10.192.228.0/23") {/* DES - Aplicação */
+                        $vlan_orchestrator = "10.192.228.0/23-VLAN295-NPRD-7259CLUNPRD004";
+                    } else if ($redes_orchestrator == "10.192.230.0/23") {/* DES - DAD ? */
+                        $vlan_orchestrator = "10.192.230.0/23-VLAN296-NPRD-7259CLUNPRD004";
+                    } else if ($redes_orchestrator == "10.192.232.0/23") {/* HMP - Apresentação */
+                        $vlan_orchestrator = "10.192.232.0/24-VLAN207-NPRD-7259CLUNPRD004";
+                    } else if ($redes_orchestrator == "10.192.236.0/23") {/* HMP - Aplicação */
+                        $vlan_orchestrator = "10.192.236.0/24-VLAN298-NPRD-7259CLUNPRD004";
+                    } else if ($redes_orchestrator == "10.192.238.0/23") {/* HMP - DAD ? */
+                        $vlan_orchestrator = "10.192.238.0/23-VLAN299-NPRD-7259CLUNPRD004";
+                    } else if ($redes_orchestrator == "10.122.150.0/23") {/* Serviços Comuns - Intra */
+                        $vlan_orchestrator = "REDE_INTRANET_10.122.150.0%2f23_Vlan_1024";
+                    } else if ($redes_orchestrator == "10.122.154.0/23") {/* Serviços Comuns - Apresentação */
+                        $vlan_orchestrator = "REDE_APRES_10.122.154.0%2f23_Vlan_1025";
+                    } else if ($redes_orchestrator == "10.122.210.0/23") {/* Serviços Comuns - Inter */
+                        $vlan_orchestrator = "REDE_INTERNET_10.122.210.0%2f23_Vlan_1041";
+                    }
+                } catch (Exception $exc) {
+                    $vmDao->setStatusForm($co_form, VmDAO::FALHA);
+                    if (isset($co_form) && isset($ip_vm) && isset($ip_base_dez)) {
+                        $rede_dao->desalocarIp($co_form, $ip_vm, $ip_base_dez);
+                    }
+                    if ($exc instanceof Extra_Exception_Infrasimples) {
+                        (!isset($co_form)) ? ($co_form = null) : ('');
+                        (!isset($ip_vm)) ? ($ip_vm = null) : ('');
+                        $data_log = new Extra_Exception_Log_Vm($co_form, $ip_vm);
+                        $exc->addLogData($data_log);
+                        $exc->saveLog();
+                        $msg['erro'] = $exc->getFinalUserMsg();
+                        $this->view->msg = $msg;
+                    } else {
+                        $tec_msg = $exc->getMessage();
+                        $msg = new Extra_Exception_Mensagem($exc->getCode(), Extra_Exception_Erros_Erros::ERRRO_DESCONHECIDO_MSG_USER, $tec_msg);
+                        $exc_generica = new Extra_Exception_Infrasimples(Extra_Exception_Infrasimples::TYPE_ERROR, $msg, $exc);
+                        (!isset($co_form)) ? ($co_form = null) : ('');
+                        (!isset($ip_vm)) ? ($ip_vm = null) : ('');
+                        $data_log = new Extra_Exception_Log_Vm($co_form, $ip_vm);
+                        $exc_generica->addLogData($data_log);
+                        $exc_generica->saveLog();
+                        $msg_tela['erro'] = $exc_generica->getFinalUserMsg();
+                        $this->view->msg = $msg_tela;
+                    }
+                    /**
+                     * Para a execução aqui, pois deu erro com o comando (return)
+                     */
+                    return;
+                }
+                $res_formulario = "<?xml version=\"1.0\" encoding=\"utf-8\" standalone=\"yes\"?>\r\n<entry xmlns:d=\"http://schemas.microsoft.com/ado/2007/08/dataservices\" xmlns:m=\"http://schemas.microsoft.com/ado/2007/08/dataservices/metadata\" xmlns=\"http://www.w3.org/2005/Atom\">\r\n<content type=\"application/xml\">\r\n<m:properties>\r\n<d:RunbookId m:type=\"Edm.Guid\">a79b6bad-9f3e-4dbc-9a67-dbd31d4f74fb</d:RunbookId>\r\n<d:Parameters>\r\n<![CDATA[<Data>\r\n<Parameter>\r\n<ID>{7b7d8ded-1d75-4da6-bef5-29c1fe0824d9}</ID>\r\n<Value>" . $hostname_orchestrator . "</Value>\r\n</Parameter>\r\n<Parameter>\r\n<ID>{b0d30b89-b852-4283-b95b-ab6346dc3146}</ID>\r\n<Value>" . $var_vm_annotation . "</Value>\r\n</Parameter>\r\n<Parameter>\r\n<ID>{0b6be8e9-7763-4f67-b38b-69ced8b21e42}</ID>\r\n<Value>" . $resourcepool . "</Value>\r\n</Parameter>\r\n<Parameter>\r\n<ID>{4ec892a2-0a8d-460e-9786-0bbec9837aa8}</ID>\r\n<Value>" . $template . "</Value>\r\n</Parameter>\r\n<Parameter>\r\n<ID>{c4ed8f0d-c126-4039-91ce-e2d38d06cf3c}</ID>\r\n<Value>" . $domain . "</Value>\r\n</Parameter>\r\n<Parameter>\r\n<ID>{a6ad39ca-0dd7-4e12-82ba-f05bb70630de}</ID>\r\n<Value>" . $vmfolder . "</Value>\r\n</Parameter>\r\n<Parameter>\r\n<ID>{ee67b30b-2f63-48f9-b7a5-7d558c4cf24c}</ID>\r\n<Value>" . $vcenter . "</Value>\r\n</Parameter>\r\n<Parameter>\r\n<ID>{ecbf1cb9-e3ad-4e02-9eb5-fdbdf59a9901}</ID>\r\n<Value>" . $dnsserver . "</Value>\r\n</Parameter>\r\n<Parameter>\r\n<ID>{d63c01d5-dd48-44ea-bd15-8bcc5ccd09ff}</ID>\r\n<Value>" . $var_vm_memory_mb . "</Value>\r\n</Parameter>\r\n<Parameter>\r\n<ID>{3636dd72-4de3-4342-9608-861e4cc9090d}</ID>\r\n<Value>" . $host . "</Value>\r\n</Parameter>\r\n<Parameter>\r\n<ID>{ab36d101-28e9-4232-b4fb-ba3f6038ae39}</ID>\r\n<Value>" . $var_vm_cpus . "</Value>\r\n</Parameter>\r\n<Parameter>\r\n<ID>{214a2c3e-4e0d-4ca5-8257-0580dbbf3bd7}</ID>\r\n<Value>" . $mascara_orchestrator . "</Value>\r\n</Parameter>\r\n<Parameter>\r\n<ID>{a8cad85b-fa95-434c-9362-6e84cde96be9}</ID>\r\n<Value>" . $sourcetemplate . "</Value>\r\n</Parameter>\r\n<Parameter>\r\n<ID>{aae733ae-3721-4094-8ded-487ca1f947b6}</ID>\r\n<Value>" . $gateway_orchestrator . "</Value>\r\n</Parameter>\r\n<Parameter>\r\n<ID>{435f1931-077b-4afb-a418-8d47efc9f717}</ID>\r\n<Value>" . $datacenter . "</Value>\r\n</Parameter>\r\n<Parameter>\r\n<ID>{858c21f2-1e89-4610-b6fc-4af51687fa93}</ID>\r\n<Value>" . $vlan_orchestrator . "</Value>\r\n</Parameter>\r\n<Parameter>\r\n<ID>{b78e6704-0d25-4db8-976c-ec3655906e65}</ID>\r\n<Value>" . $ip_orchestrator . "</Value>\r\n</Parameter>\r\n<Parameter>\r\n<ID>{e5722f7b-24bc-4ba7-b156-2fd55138cfa2}</ID>\r\n<Value>" . $datastore . "</Value>\r\n</Parameter>\r\n</Data>]]>\r\n</d:Parameters>\r\n</m:properties>\r\n</content>\r\n</entry>\r\n";
+                $connect_orchestrator = $res_formulario;
+                try {
+                    $co_runbook = $vmDao->orchestrator($connect_orchestrator);
+                    $vmDao->vinculaCodigoDoRunbookDoForm($co_form, $co_runbook);
+//                    Zend_Debug::dump("====================== msg_envio_orchestrator ===================");
+//                    Zend_Debug::dump($connect_orchestrator, '$connect_orchestrator');
+//                    Zend_Debug::dump($co_runbook, '$co_runbook');
+//                    Zend_Debug::dump("=================================================================");
+//                    exit();
+                } catch (Exception $exc) {
+                    $vmDao->setStatusForm($co_form, VmDAO::FALHA);
+                    if (isset($co_form) && isset($ip_vm) && isset($ip_base_dez)) {
+                        $rede_dao->desalocarIp($co_form, $ip_vm, $ip_base_dez);
+                    }
+                    if ($exc instanceof Extra_Exception_Infrasimples) {
+                        (!isset($co_form)) ? ($co_form = null) : ('');
+                        (!isset($ip_vm)) ? ($ip_vm = null) : ('');
+                        $data_log = new Extra_Exception_Log_Vm($co_form, $ip_vm);
+                        $exc->addLogData($data_log);
+                        $exc->saveLog();
+                        $msg['erro'] = $exc->getFinalUserMsg();
+                        $this->view->msg = $msg;
+                    } else {
+                        $tec_msg = $exc->getMessage();
+                        $msg = new Extra_Exception_Mensagem($exc->getCode(), Extra_Exception_Erros_Erros::ERRRO_DESCONHECIDO_MSG_USER, $tec_msg);
+                        $exc_generica = new Extra_Exception_Infrasimples(Extra_Exception_Infrasimples::TYPE_ERROR, $msg, $exc);
+                        (!isset($co_form)) ? ($co_form = null) : ('');
+                        (!isset($ip_vm)) ? ($ip_vm = null) : ('');
+                        $data_log = new Extra_Exception_Log_Vm($co_form, $ip_vm);
+                        $exc_generica->addLogData($data_log);
+                        $exc_generica->saveLog();
+                        $msg_tela['erro'] = $exc_generica->getFinalUserMsg();
+                        $this->view->msg = $msg_tela;
+                    }
+                    /**
+                     * Para a execução aqui, pois deu erro com o comando (return)
+                     */
+                    return;
+                }
+                $msg['sucesso'] = "Iniciada criação do Servidor.";
+                $this->view->msg = $msg;
+            } else {
+                $vm_form->populate($options);
+                $this->view->vm_form = $vm_form;
+                $this->render('criarvm');
+                return;
+            }
+        }
     }
 
-    public function unauthorizedAction() {
+    public function acessojenkinsldomAction() {
+//      ######## Mostra qual usuario esta logado ###############################
+        $auth = Zend_Auth::getInstance();
+        $ldomDao = new LdomDAO();
+        $this->_helper->layout->setLayout('inicial');
+        $autenticate = new Extra_Auth_Adapter_Ldap($auth->getInstance()->getIdentity(), null);
+        $info = $autenticate->getUserData();
+        $nome = $autenticate->getUserDataKey("cn");
+        $matricula = $autenticate->getUserDataKey("co-usuario");
+        $this->view->usuario = $nome[0];
+        $this->view->matricula = $matricula[0];
+        $this->_helper->viewRenderer->setNoRender(false);
 
+        if ($this->getRequest()->isPost()) {
+
+            if (isset($_POST['var_vcenter_username'])) {
+                $var_vcenter_username = strtolower($_POST['var_vcenter_username']);
+            }
+            if (isset($_POST['var_vcenter_password'])) {
+                $var_vcenter_password = $_POST['var_vcenter_password'];
+            }
+            if (isset($_POST['var_vcenter_datacenter'])) {
+                $var_vcenter_datacenter = $_POST['var_vcenter_datacenter'];
+            }
+            if (isset($_POST['var_vm_memory_mb'])) {
+                $var_vm_memory_mb = $_POST['var_vm_memory_mb'];
+            }
+            if (isset($_POST['var_vm_cpus'])) {
+                $var_vm_cpus = $_POST['var_vm_cpus'];
+            }
+            if (isset($_POST['var_vcenter_cluster'])) {
+                $var_vcenter_cluster = $_POST['var_vcenter_cluster'];
+            }
+            if (isset($_POST['var_vm_annotation'])) {
+                $var_vm_annotation = $_POST['var_vm_annotation'];
+
+                $var_vm_disks = "[{'size_gb':'100','type':'thin','datastore':'7259CLUNPRD004_DS_CLUSTER01_HW'}]";
+
+                $var_vm_datastore = "7259CLUNPRD004_DS_CLUSTER01_HW";
+
+                $co_form = $ldomDao->provisonarCodigoDoForm();
+                $var_cd_ifs = $co_form;
+
+                $redeLdomDao = new RedeLdomDAO();
+                $data_rede = $redeLdomDao->provisonarCodigoDoFormIp($co_form);
+                if (is_array($data_rede)) {
+                    $ip = $data_rede['ip_vm'];
+                    if (isset($data_rede['ip_vm'])) {
+                        $ip_jenkins = $data_rede['ip_vm'];
+                    }
+                    if (isset($data_rede['mascara_vm'])) {
+                        $mascara_jenkins = $data_rede['mascara_vm'];
+                    }
+                    if (isset($data_rede['gateway_vm'])) {
+                        $gateway_jenkins = $data_rede['gateway_vm'];
+                    }
+                    if (isset($data_rede['hostname'])) {
+                        $hostname_jenkins = $data_rede['hostname'];
+                    }
+                } else {
+                    $msg_erro = "Sem disponibilidade de IP, Mascara, Gateway:";
+                    $this->view->msg_ip = $msg_erro;
+                }
+                $res_formulario = '{"parameter":[{"name":"var_vcenter_hostname","value":"vcenter.ad.caixa"},{"name":"var_vcenter_username","value":"' . $var_vcenter_username . '"},{"name":"var_vcenter_password","value":"' . $var_vcenter_password . '"},{"name":"var_vcenter_datacenter","value":"CEPTIBR"},{"name":"var_vcenter_cluster","value":"7259CLUNPRD004"},{"name":"var_vcenter_folder","value":"/CEPTIBR21/vm/"},{"name":"var_vm_state","value":"poweredon"},{"name":"var_vm_memory_mb","value":"2048"},{"name":"var_vm_cpus","value":"2"},{"name":"var_vm_scsi","value":"paravirtual"},{"name":"var_vm_name_net","value":"10.192.230.0%2f23-VLAN296-NPRD-7259CLUNPRD004"},{"name":"var_vm_ip","value":"' . $ip_jenkins . '"},{"name":"var_vm_netmask","value":"' . $mascara_jenkins . '"},{"name":"var_vm_gateway","value":"' . $gateway_jenkins . '"},{"name":"var_vm_net_type","value":"static"},{"name":"var_vm_start_connected","value":"yes"},{"name":"var_vm_template","value":"Template_CentOS_Geral_CEPTIBR"},{"name":"var_vm_wait_ip","value":"yes"},{"name":"var_vm_backup_name_net","value":"10.122.16.0%2f20-VLAN10-BKP-7259CLUNPRD004"},{"name":"var_vm_hostname","value":"' . $hostname_jenkins . '"},{"name":"var_vm_dns1","value":"10.192.32.50"},{"name":"var_vm_dns2","value":"10.192.32.51"},{"name":"var_vm_domain","value":"intra.caixa.gov.br"},{"name":"var_vm_puppet_ip","value":"10.122.154.13"},{"name":"var_vm_puppet_hostname","value":"cbrsvaprlx018.intra.caixa.gov.br"},{"name":"var_vm_puppet_username","value":"USUARIO"},{"name":"var_vm_puppet_password","value":"SENHA_PUPPET"},{"name":"var_vm_user","value":"root"},{"name":"var_vm_passwd","value":"123456"},{"name":"var_vm_annotation","value":"' . $var_vm_annotation . '"},{"name":"var_vm_disk_additional","value":"false"},{"name":"var_vm_puppet_group","value":"24"},{"name":"var_vm_name_net","value":"10.192.230.0%2f23-VLAN296-NPRD-7259CLUNPRD004"},{"name":"var_vm_backup_network","value":"true"},{"name":"var_vm_backup_netmask","value":"255.255.240.0"},{"name":"var_vm_backup_network_connected","value":"true"},{"name":"var_vm_backup_ip","value":"10.122.16.10"},{"name":"var_vm_disks","value":"' . $var_vm_disks . '"},{"name":"var_vm_delete","value":"false"},{"name":"var_vm_datastore","value":"' . $var_vm_datastore . '"},{"name":"var_cd_ifs","value":"' . $var_cd_ifs . '"},{"name":"var_site","value":"sparc-ctc"},{"name":"var_platform","value":"Solaris"},{"name":"var_L_matriz","value":"10.222.64.63"},{"name":"var_L_ldomname","value":"teste001"},{"name":"var_vm_cpus","value":"' . $var_vm_cpus . '"},{"name":"var_vm_memory_mb","value":"' . $var_vm_memory_mb . '"},{"name":"var_vm_name_net","value":"' . $vlan_jenkins . '"}]}';
+
+                $connect_jenkins = rawurlencode($res_formulario);
+            }
+
+            try {
+                $msg_envio_jenkins = $ldomDao->jenkins($connect_jenkins);
+            } catch (Exception $exc) {
+                $msg_envio_jenkins['erro'] = 'erro';
+                $ldomDao->setSucessoOuFalhaEnvioForm($co_form, $msg_envio_jenkins, $ip);
+                throw $exc;
+            }
+            $ldomDao->setSucessoOuFalhaEnvioForm($co_form, $msg_envio_jenkins, $ip);
+
+            sleep(4);
+            if (array_key_exists('sucesso', $msg_envio_jenkins)) {
+                $co_build = $ldomDao->procuraCodigoDaBuildDoFormPorNvezes($co_form);
+                $ldomDao->vinculaCodigoDaBuildDoForm($co_form, $co_build);
+            }
+
+            $this->view->msn = $msg_envio_jenkins;
+            $this->view->var_vcenter_username = $var_vcenter_username;
+            $this->view->var_vcenter_password = $var_vcenter_password;
+            $this->view->var_vm_cpus = $var_vm_cpus;
+            $this->view->var_vm_memory_mb = $var_vm_memory_mb;
+            $this->view->var_vm_annotation = $var_vm_annotation;
+            $this->view->var_cd_ifs = $var_cd_ifs;
+            $this->render('acessojenkinsldom');
+        }
+    }
+
+    public function procuracodigobuildAction() {
+
+        $this->_helper->viewRenderer->setNoRender(true);
         $this->_helper->layout->disableLayout();
-        $this->getResponse()->setHttpResponseCode(401);
-        $this->render('index');
+        $var_cd_ifs = $this->getParam('var_cd_ifs');
+
+        echo $var_cd_ifs;
+    }
+
+    public function statuslogAction() {
+
+        $this->_helper->viewRenderer->setNoRender(true);
+        $this->_helper->layout->disableLayout();
+        $var_cd_ifs = $this->getParam('var_cd_ifs');
+        $vmDao = new VmDAO();
+        $dados = $vmDao->getFormPorCodigo($var_cd_ifs);
+
+        $log = $vmDao->consultaLog($dados['co_build']);
+        if (($dados['ic_status_log_build'] == 'FAILED')) {
+            $rede_dao = new RedeDAO();
+            $dados_ip = $rede_dao->getDadosIpPorCodigodoForm($var_cd_ifs);
+            $rede_dao->desalocarIp($var_cd_ifs, $dados_ip['ip_vm'], $dados_ip['ip_base_dez']);
+        } else if ($log['status_build'] == 'SUCCESS') {
+            $log = $vmDao->consultaLog($dados['co_build']);
+            $rede_dao = new RedeDAO();
+            $dados_ip = $rede_dao->getDadosIpPorCodigodoForm($var_cd_ifs);
+
+            $log['ip_vm'] = $dados_ip['ip_vm'];
+            $log['hostname'] = $dados_ip['hostname'];
+
+            $rede_dao->setStatusIpUsado($var_cd_ifs, $dados_ip['ip_vm']);
+        }
+
+        $vmDao->atualizaStatusLogBuild($var_cd_ifs, $log['status_vm']);
+
+//        return ;
+        $this->_helper->json->sendJson($log);
+    }
+
+    public function statuslogwindowsAction() {
+
+        $this->_helper->viewRenderer->setNoRender(true);
+        $this->_helper->layout->disableLayout();
+        $co_form = $this->getParam('co_form');
+        $vmDao = new VmDAO();
+        $dados = $vmDao->getFormPorCodigo($co_form);
+
+        $log = $vmDao->orchestrator_status($dados['co_runbook']);
+        if ((strtoupper($dados['ic_status_log_build']) == 'WARNING')) {
+            $rede_dao = new RedeDAO();
+            $dados_ip = $rede_dao->getDadosIpPorCodigodoForm($co_form);
+            $rede_dao->desalocarIp($co_form, $dados_ip['ip_vm'], $dados_ip['ip_base_dez']);
+        } else if (strtoupper ($log['status_orchestrator']) == 'SUCCESS') {
+            $log = $vmDao->orchestrator_status($dados['co_runbook']);
+            $rede_dao = new RedeDAO();
+            $dados_ip = $rede_dao->getDadosIpPorCodigodoForm($co_form);
+            $log['ip_vm'] = $dados_ip['ip_vm'];
+            $log['hostname'] = $dados_ip['hostname'];
+            $rede_dao->setStatusIpUsado($co_form, $dados_ip['ip_vm']);
+        }
+
+        $vmDao->atualizaStatusLogBuild($co_form, $log['status_orchestrator']);
+        $this->_helper->json->sendJson($log);
+    }
+
+    public function salvarAction() {
+        Zend_Loader::loadClass('Perg');
+
+        $auth = Zend_Auth::getInstance();
+        $autenticate = new Extra_Auth_Adapter_Ldap($auth->getInstance()->getIdentity(), null);
+        if ($auth->hasIdentity()) {
+            $this->view->usuario = $auth->getIdentity();
+            $this->_helper->layout->setLayout('inicial');
+            $nome = $autenticate->getUserDataKey("cn");
+            $matricula = $autenticate->getUserDataKey("co-usuario");
+            $pergunta = new Perg();
+
+            $arrayDados = array();
+            $arrayDados['dt_data_hora'] = date("Y-m-d H:i:s");
+            $arrayDados['matricula'] = $matricula[0];
+            $arrayDados['perg_1'] = $_POST['perg_1'];
+//            $arrayDados['perg_2'] = $_POST['perg_2'];
+            $arrayDados['perg_3'] = $_POST['perg_3'];
+            $arrayDados['perg_4'] = $_POST['perg_4'];
+            $arrayDados['perg_5'] = $_POST['perg_5'];
+            $pergunta->insert($arrayDados);
+            $this->_redirect("/index/enviado");
+        }
     }
 
 }
