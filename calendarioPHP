@@ -1,0 +1,90 @@
+$tabela = new DadosRecInterfaceSigcr();
+        $util = new UtilDAO();        
+        $resposta = array();       
+        $data = explode('/', $dataSessao);        
+        $ano = $data[0];
+        $mes = $data[1];        
+        $dataSessao = "01-". $mes ."-" . $ano;
+        $dt_fim = "31-". $mes ."-" . $ano;        
+        $db = Zend_Db_Table_Abstract::getDefaultAdapter();
+         
+        $feriado = $util->verificaFeriado($dataSessao);
+        
+        $select = "SELECT * FROM pdb.pdbtb473_rec_interface_sigcr WHERE TO_CHAR(odate, '01-MM-YYYY') = '$dataSessao'";    
+        $cache_query = new Extra_Cache_Query();
+        $cache_query->_lifetime = 3600;
+        $resultados = $cache_query->cachequery($select);
+//        $resultados = $db->query($select);           
+       
+        foreach ($resultados as $resultado):
+            $dt_inicio = date("d/m/Y", strtotime($resultado['odate']));           
+           
+            if ($resultado['co_tb_indicador'] == '1275') {
+                $resposta[$dt_inicio]['dataSipcs'] = date("d/m/Y H:i:s", strtotime($resultado['dt_hora_arquivo']));
+                $resposta[$dt_inicio]['odateSipcs'] = $resultado['odate'];
+                $resposta[$dt_inicio]['diaSipcs'] = $dt_inicio;
+            }
+
+            if ($resultado['co_tb_indicador'] == '1276') {
+                $resposta[$dt_inicio]['dataSiban'] = date("d/m/Y H:i:s", strtotime($resultado['dt_hora_arquivo']));
+                $resposta[$dt_inicio]['odateSiban'] = $resultado['odate'];
+                $resposta[$dt_inicio]['diaSiban'] = $dt_inicio;
+            }
+            if ($resultado['co_tb_indicador'] == '1277') {
+                $resposta[$dt_inicio]['dataSiapi'] = date("d/m/Y H:i:s", strtotime($resultado['dt_hora_arquivo']));
+                $resposta[$dt_inicio]['odateSiapi'] = $resultado['odate'];
+                $resposta[$dt_inicio]['diaSiapi'] = $dt_inicio;
+            }
+            if ($resultado['co_tb_indicador'] == '1278') {
+                $resposta[$dt_inicio]['dataSiapx'] = date("d/m/Y H:i:s", strtotime($resultado['dt_hora_arquivo']));
+                $resposta[$dt_inicio]['odateSiapx'] = $resultado['odate'];
+                $resposta[$dt_inicio]['diaSiapx'] = $dt_inicio;
+            }
+            if ($resultado['co_tb_indicador'] == '1279') {
+                $resposta[$dt_inicio]['dataSicob'] = date("d/m/Y H:i:s", strtotime($resultado['dt_hora_arquivo']));
+                $resposta[$dt_inicio]['odateSicob'] = $resultado['odate'];
+                $resposta[$dt_inicio]['diaSicob'] = $dt_inicio;
+            }
+            if ($resultado['co_tb_indicador'] == '1280') {
+                $resposta[$dt_inicio]['dataSidec'] = date("d/m/Y H:i:s", strtotime($resultado['dt_hora_arquivo']));
+                $resposta[$dt_inicio]['odateSidec'] = $resultado['odate'];
+                $resposta[$dt_inicio]['diaSidec'] = $dt_inicio;
+            }
+            if ($resultado['co_tb_indicador'] == '1281') {
+                $resposta[$dt_inicio]['dataSiemp'] = date("d/m/Y H:i:s", strtotime($resultado['dt_hora_arquivo']));
+                $resposta[$dt_inicio]['odateSiemp'] = $resultado['odate'];
+                $resposta[$dt_inicio]['diaSiemp'] = $dt_inicio;
+            }
+            if ($resultado['co_tb_indicador'] == '1282') {
+                $resposta[$dt_inicio]['dataSince'] = date("d/m/Y H:i:s", strtotime($resultado['dt_hora_arquivo']));
+                $resposta[$dt_inicio]['odateSince'] = $resultado['odate'];
+                $resposta[$dt_inicio]['diaSince'] = $dt_inicio;
+            }
+
+        endforeach;  
+       
+        $i = 0;
+        $array_month = array();
+        //Monta o mês inteiro
+        $numero = cal_days_in_month(CAL_GREGORIAN, $mes, $ano); // 31 
+        for ($i = 1; $i <= $numero; $i++):
+            $array_month[$i] = array();
+        endfor;       
+        $array_ordenado = array();
+        $dia = 1;
+        /**
+         *  Roda o mês inteiro, pegando a chave do mês para index do array
+         *  Popula o array, de acordo com a chave caso seja igual
+         */        
+        foreach($array_month as $chave => $dados) {
+            $array_ordenado[$chave] = array();
+            foreach ($resposta as $key => $value) {
+                if($chave == $key) {
+                    $array_ordenado[$chave] = $value;                   
+                }
+            }            
+        }
+     
+        $mesInterface['mesInterface'] = $array_ordenado;  
+
+        return $mesInterface;  
