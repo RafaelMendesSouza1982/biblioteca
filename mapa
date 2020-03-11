@@ -1,0 +1,232 @@
+<link rel="stylesheet" href="<?php echo EXT_PATH; ?>css/tooltipster.css" type="text/css" media="screen" /> 
+<script src="<?php echo EXT_PATH; ?>js/jquery.tooltipster.min.js" type="text/javascript"></script> 
+<script src="<?php echo EXT_PATH; ?>js/bootstrap.js" type="text/javascript"></script> 
+<link href="<?php echo EXT_PATH; ?>css/bootstrap.css" rel="stylesheet" type="text/css" />
+<style>
+    table thead {
+        /*background-color: WhiteSmoke;*/
+        font-weight: bold;
+        /*color: #555558;*/
+    }
+    .titulo01{
+        font-size: 18px;
+        font-family: sans-serif;
+        font-variant: initial;
+        font-synthesis: weight;
+    }
+    .titulo02{
+        font-size: 11px;       
+        font-family: sans-serif;
+        background-color: #5b9bd5;
+        color: #666666;
+        font-variant: initial;
+
+    }
+    table td { 
+        width: 69px;
+        padding-bottom: 3px;
+        padding-top: 3px;
+        margin: 2px 2px 2px 2px;
+        border: 2px solid White;
+        border-radius: 8px;
+    }
+    table tbody td {
+        /*        background-color: #E6E6E6;*/
+        border: 2px solid White;
+
+        /*color: #555558;*/
+    }
+    table tr {
+        padding: 2px 2px 2px 2px; margin: 2px 2px 2px 2px;
+        border: 2px solid White;
+    }
+    .mapa_termal{
+        width: 120px;  
+        margin: 0px 0px 0px 10px;
+    }
+    .text_mapa{
+        font-size: 12px; 
+        padding-top: 3px;
+    }
+    .mapa{
+        width: 20px;
+
+    }
+    .media_mapa{
+        width: 320px;
+        float: left;
+        margin: 30px 0px 40px 10px;
+        display: block;
+
+    }
+    .table_1{
+        border: 2px solid #cccccc;
+    }
+    .sistemas{
+        max-width: 320px;
+        min-width: 320px;
+    }
+    .caixa_mapa{
+        float: left;
+    }
+    .caixa_status_mapa{
+        float: right;
+        width: 320px;
+        padding-top: 5px;
+    }
+    .ans{
+        width: 320px;
+        background-color:#5b9bd5;
+        color: WhiteSmoke; 
+        font-size: 16px;
+    }
+</style>
+<div class="mapa_termal">
+    <a class="btn btn-xs btn-warning text_mapa" href="<?php echo $this->baseUrl(); ?>/niveis"><span>Níveis de Serviços</span></a>
+</div>
+<div class="graficoGrandeB_2 boxShadow redondo10 caixa_mapa">
+    <div id="relatorio2" class="graficoInternoNegocio_2" >
+        <table class="dataTable">
+            <thead>
+                <tr>
+                    <th rowspan="4" class="ans">ANS</th>                                        
+                </tr>
+                <tr>
+                    <th colspan="13" style="background-color:#5b9bd5; text-align: center; color: WhiteSmoke; font-size: 18px;"><?php echo "Ano " . $this->ano; ?></th>
+                </tr>
+                <tr> 
+                    <?php
+                    foreach ($this->meses as $mes):
+                        ?>
+                        <td style="width: 80px; text-align: center; background-color: "><?php echo $mes; ?></td>  
+                    <?php endforeach; ?>
+                </tr>    
+            </thead>
+            <tbody>                  
+                <?php
+                foreach ($this->servicos as $co_tb_servico => $nm_servico):
+                    ?>
+                    <tr>                        
+                        <td class="sistemas" style="font-size:12.5px;"><?php echo $nm_servico; ?></td>  
+                        <?php
+                        foreach ($this->meses as $mes):
+                            ?>
+                            <?php
+                            if (isset($this->historico[$mes][$co_tb_servico]['cor_stauts_acordo'])) {
+                                $cor = $this->historico[$mes][$co_tb_servico]['cor_stauts_acordo'];
+                            } else {
+                                $cor = "WhiteSmoke";
+                            }
+                            ?>
+                            <td style="background-color:<?php echo $cor; ?>;"></td>  
+                        <?php endforeach; ?>
+                    </tr>  
+                <?php endforeach; ?>
+            </tbody>
+        </table>
+    </div>         
+</div>
+<div class="caixa_status_mapa">
+    <div class="graficomapa boxShadow redondo10">
+        <table class="table_1" style="border: 1px solid #cccccc;">
+            <th colspan="2" style="background-color: #5b9bd5; color: WhiteSmoke; width: 100%; padding-left: 10px; font-size: 18px;">Indice</th>
+            <tr>
+                <td style="background-color: LimeGreen; width: 80px;"></td>
+                <td style="width: 220px; padding-left: 5px;">Acordo Cumprido</td>
+            </tr>
+            <tr>
+                <td style="background-color: red; width: 80px;"></td>
+                <td style="width: 220px; padding-left: 5px;">Acordo Descumprido</td>
+            </tr>
+            <tr>
+                <td style="background-color: orange; width: 80px;"></td>
+                <td style="width: 220px; padding-left: 5px;">Tendência de Descumprimento</td>
+            </tr>
+            <tr>
+                <td style="background-color: whitesmoke; width: 80px;"></td>
+                <td style="width: 220px; padding-left: 5px;">Sem dados</td>
+            </tr>
+        </table>
+    </div>
+    <br>
+    <div class="graficomapa boxShadow redondo10">
+        <table class="table_1">
+            <?php
+            $meses = 0;
+            $mes = 0;
+            $ans = 0;
+            $acordo_cumprido = 0;
+            $acordo_descumprido = 0;
+            $tendencia_descumprido = 0;
+            foreach ($this->servicos as $k => $sistemas) {
+                if (isset($sistemas)) {
+                    $ans++;
+                }
+            }
+            foreach ($this->historico as $k => $nome) {
+                if (isset($k)) {
+                    $meses++;
+                }
+                foreach ($nome as $k2 => $nomes) {
+                    if ($nomes['stauts_acordo'] == "Acordo Cumprido") {
+                        $acordo_cumprido++;
+                    }
+
+                    if ($nomes['stauts_acordo'] == 'Acordo Descumprido') {
+                        $acordo_descumprido++;
+                    }
+
+                    if ($nomes['stauts_acordo'] == 'Tendência de Descumprimento') {
+                        $tendencia_descumprido++;
+                    }
+                    $res_cumprido = 100;
+                    $tota_descumprido = sprintf("%.2f", ($acordo_descumprido / ($ans * $meses)) * 100);
+                    $total_cumprido = sprintf("%.2f", ($res_cumprido - $tota_descumprido));
+                }
+            }
+            ?>  
+            <tr style="background-color: #cccccc; color: #000;">
+                <td style="width: 200px; padding: 0px 0px 0px 10px; color: #666666;"><b><?php echo "Ano " . $this->ano; ?></b></td>
+                <td style="width: 100px; text-align: center; color: #666666;"><b>Total no ano</b></td>
+            </tr>
+            <tr>
+                <td style="width: 200px; padding: 0px 0px 0px 10px;">Total de ANS</td>
+                <td style="width: 100px; text-align: center;"><?php echo $ans; ?></td>
+            </tr>
+            <tr>
+                <td style="width: 200px; padding: 0px 0px 0px 10px;">Total de meses</td>
+                <td style="width: 100px; text-align: center;"><?php echo $meses; ?></td>
+            </tr>
+            <tr>
+                <td style="width: 200px; padding: 0px 0px 0px 10px;">Total descumprido no ano</td>
+                <td style="width: 100px; text-align: center;">
+                    <?php
+                    if (isset($acordo_descumprido)) {
+                        echo $acordo_descumprido;
+                    }
+                    ?>
+                </td>
+            </tr>
+            <tr>
+                <td style="width: 200px; padding: 0px 0px 0px 10px;">% Descumprimento no Ano</td>
+                <td style="width: 100px; text-align: center;">
+                    <?php
+                    if (isset($tota_descumprido)) {
+                        echo sprintf("%.2f", $tota_descumprido) . "%";
+                    }
+                    ?>
+                </td>
+            </tr>
+            <tr style="background-color: #5B9BD5; color: WhiteSmoke;">
+                <td style="width: 200px; padding: 0px 0px 0px 10px;"><b>Total cumprido</b></td>
+                <td style="width: 100px; text-align: center;">
+                    <?php
+                    if (isset($total_cumprido)) {
+                        echo sprintf("%.2f", $total_cumprido) . "%";
+                    }
+                    ?>
+                </td>
+            </tr>
+        </table>
+    </div>
+</div>
