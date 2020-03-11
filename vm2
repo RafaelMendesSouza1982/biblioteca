@@ -1,0 +1,597 @@
+<?php
+
+/**
+ * Classe que realiza interações com dados para contratos
+ *
+ */
+class VmDAO extends Extra_Model_DAO {
+
+    const FALHA = "FALHA";
+    const SUCESSO = "SUCESSO";
+    const PROVISIONADO = "PROVISIONADO";
+    const ENVIADO = "ENVIADO";
+    const CODIGO_BUILD_PENDENTE = "CODIGO_BUILD_PENDENTE";
+
+    public static function build() {
+        return new self();
+    }
+
+    /**
+     * 
+     * @return integer $co_form código provisionado na tabela
+     */
+    public function getFormPorCodigo($co_form) {
+
+        $vm_tabel = new Vm();
+        $row = $vm_tabel->find($co_form)->current();
+        return $row->toArray();
+    }
+
+    /**
+     * 
+     * @return integer $co_form código provisionado na tabela
+     */
+    public function provisonarCodigoDoForm() {
+
+        $auth = Zend_Auth::getInstance();
+        $matricula = strtolower($auth->getInstance()->getIdentity());
+        $vm_tabel = new Vm();
+        $data['ic_status'] = 'PROVISIONADO';
+        $data['dt_data_hora_status'] = date('Y-m-d H:i:s');
+        $data['usuario'] = $matricula;
+        $co_form = $vm_tabel->createRow($data)->save();
+        return $co_form;
+    }
+
+    public function setStatusForm($co_form, $status) {
+
+        $vm_tabel = new Vm();
+        $row = $vm_tabel->find($co_form)->current();
+        $data['ic_status'] = $status;
+        $data['dt_data_hora_status'] = date('Y-m-d H:i:s');
+        $row->setFromArray($data)->save();
+    }
+
+    /**
+     * 
+     * @return integer $co_form código provisionado na tabela
+     */
+    public function vinculaCodigoDaBuildDoForm($co_form, $co_build) {
+
+        if (is_null($co_build)) {
+            $co_build = 9999;
+        }
+        $vm_tabel = new Vm();
+        $row = $vm_tabel->find($co_form)->current();
+        $data['co_build'] = $co_build;
+        $data['ic_status'] = 'SUCESSO';
+        $data['dt_data_hora_status'] = date('Y-m-d H:i:s');
+        $row->setFromArray($data)->save();
+    }
+
+    /**
+     * 
+     * @return integer $co_form código provisionado na tabela
+     */
+    public function vinculaCodigoDoRunbookDoForm($co_form, $co_runbook) {
+
+        $vm_tabel = new Vm();
+        $row = $vm_tabel->find($co_form)->current();
+        $data['co_runbook'] = $co_runbook;
+        $data['ic_status'] = 'SUCESSO';
+        $data['dt_data_hora_status'] = date('Y-m-d H:i:s');
+        $row->setFromArray($data)->save();
+    }
+
+    /**
+     * 
+     * @return integer $co_form código provisionado na tabela
+     */
+    public function atualizaStatusLogBuild($co_form, $ic_status_log_build) {
+
+        $vm_tabel = new Vm();
+        $row = $vm_tabel->find($co_form)->current();
+        $data['ic_status_log_build'] = strtoupper($ic_status_log_build);
+        $data['dt_data_hora_status_log_build'] = date('Y-m-d H:i:s');
+        $row->setFromArray($data)->save();
+    }
+
+//    /**
+//     * Atualiza a tabela com o status do envio do form
+//     * @param type $co_form
+//     * @param type $msg_envio_jenkins
+//     */
+//    public function setSucessoOuFalhaEnvioForm($co_form, $msg_envio_jenkins) {
+//
+//        $vm_tabel = new Vm();
+//        if (isset($msg_envio_jenkins['sucesso'])) {
+//            $row = $vm_tabel->find($co_form)->current();
+//            $data['ic_status'] = 'ENVIADO';
+//            $data['dt_data_hora_status'] = date('Y-m-d H:i:s');
+//            $row->setFromArray($data)->save();
+//        } else if (isset($msg_envio_jenkins['erro'])) {
+////            $row = $vm_tabel->find($co_form)->current()->delete();
+////            $rede_dao = new RedeDAO();
+////            $dados_ip = $rede_dao->getDadosIpPorCodigodoForm($co_form);
+////            
+////            $rede_dao->liberarIpVm($dados_ip['ip_vm']);
+//            
+//            
+//
+//        }
+//    }
+
+    public function jenkins($connect_jenkins) {
+        set_time_limit(1200);
+        $curl = curl_init();
+        $opt = array(
+            CURLOPT_URL => getenv('JENKINS_URL') . "/job/automacao_vms/build",
+            CURLOPT_RETURNTRANSFER => true,
+            CURLOPT_HEADER => true,
+            CURLOPT_ENCODING => "",
+            CURLOPT_MAXREDIRS => 10,
+            CURLOPT_TIMEOUT => 30,
+            CURLOPT_HTTP_VERSION => CURL_HTTP_VERSION_1_1,
+            CURLOPT_CUSTOMREQUEST => "POST",
+            CURLOPT_POSTFIELDS => "json=$connect_jenkins",
+            CURLOPT_HTTPHEADER => array(
+                "Authorization: Basic " . getenv('JENKINS_TOKEN'),
+                "Cache-Control: no-cache",
+                "Content-Type: application/x-www-form-urlencoded",
+            )
+//            CURLOPT_HTTPHEADER => array(
+//                "Authorization: Basic DSyKHYrtmNExk_8DV7fo",
+//                "Cache-Control: no-cache",
+//                "Content-Type: application/x-www-form-urlencoded",
+//            )
+        );
+        curl_setopt_array($curl, $opt);
+//        Zend_Debug::dump($opt);
+//        exit();
+        $response = curl_exec($curl);
+
+
+//        $httpcode = curl_getinfo($curl, CURLINFO_HTTP_CODE);
+//        $err = curl_error($curl);
+//        //http 201 indica que a requisição foi bem sucedida e que um novo recurso foi criado
+//        if ($err != "" || $httpcode != 201) {
+//            $msn['erro'] = "</br>Falha ao iníciar criação ddo Servidor. Código de erro http: $httpcode. Erro da requisição: $err.";
+//            //echo "Conexão apresentou o(os) seguinte(es) erros (" . $err . " )";
+//        } else {
+//            $msn['sucesso'] = "Iníciado criação do Servidor.";
+//            //echo $response;   czcyNTkxNDpKWTJoNVk2bjNy
+//        }
+
+
+        /**
+         * HTTP 201 = 201 Created - HTTP
+         */
+        $httpcode = curl_getinfo($curl, CURLINFO_HTTP_CODE);
+        if ((int) curl_errno($curl) > 0 || $httpcode != 201) {
+            $info = curl_getinfo($curl);
+            $tec_msg = "Http Code: " . $httpcode . "</br>" . Zend_Debug::dump($info, "info curl array", false) . "</br>" . $response;
+            $msg = new Extra_Exception_Mensagem(Extra_Exception_Erros_Erros::JEKINS_AO_CRIAR_VM_CODE, Extra_Exception_Erros_Erros::JEKINS_AO_CRIAR_VM_MSG_USER, $tec_msg);
+            throw new Extra_Exception_Infrasimples(Extra_Exception_Infrasimples::TYPE_ERROR, $msg);
+        }
+        curl_close($curl);
+    }
+
+    public function orchestrator($connect_orchestrator) {
+        set_time_limit(1200);
+        $curl = curl_init();
+
+        curl_setopt_array($curl, array(
+//            CURLOPT_PORT => "81",
+            CURLOPT_URL => getenv('ORCHESTRATOR_URL') . ':81/Orchestrator2012/Orchestrator.svc/Jobs',
+//            CURLOPT_URL => "http://CBRNPAPLNT001.intra.caixa.gov.br:81/Orchestrator2012/Orchestrator.svc/Jobs",
+//            CURLOPT_URL => "http://CBRNPAPLNT001.intra.caixa.gov.br:81/Orchestrator2012/Orchestrator.svc/Runbooks(guid'a79b6bad-9f3e-4dbc-9a67-dbd31d4f74fb')/Jobs",
+//            CURLOPT_URL => "http://CBRNPAPLNT001.intra.caixa.gov.br:81/Orchestrator2012/Orchestrator.svc/Jobs(guid'bb605637-af79-4f99-ac74-9b9cd9be4c70')/Instances?$select=Status",
+            CURLOPT_RETURNTRANSFER => true,
+            CURLOPT_ENCODING => "",
+            CURLOPT_MAXREDIRS => 10,
+            CURLOPT_TIMEOUT => 30,
+            CURLOPT_HTTPAUTH => CURLAUTH_NTLM,
+            CURLOPT_UNRESTRICTED_AUTH => 1,
+            CURLOPT_USERPWD => "s725914:JY2h5Y6n3r",
+            CURLOPT_HTTP_VERSION => CURL_HTTP_VERSION_1_1,
+            CURLOPT_HEADER => 0,
+            CURLOPT_CUSTOMREQUEST => "POST",
+            CURLOPT_POSTFIELDS => $connect_orchestrator,
+            CURLOPT_HTTPHEADER => array(
+                "Cache-Control: no-cache",
+                "Content-Type: application/atom+xml",
+            ),
+        ));
+
+        $response = curl_exec($curl);
+
+        $httpcode = curl_getinfo($curl, CURLINFO_HTTP_CODE);
+        Zend_Debug::dump($httpcode, '$httpcode');
+        $info = curl_getinfo($curl);
+        if ((int) curl_errno($curl) > 0 || !in_array($httpcode, array(201))) {
+            $tec_msg = "Http Code: " . $httpcode . "</br>" . Zend_Debug::dump($info, "Error ao acionar o Runbook do Orchestrator.", false) . "</br> Post:" . $connect_orchestrator . "</br> Response: " . $response;
+            $msg = new Extra_Exception_Mensagem(Extra_Exception_Erros_Erros::ORCHESTRATOR_AO_CRIAR_VM_CODE, Extra_Exception_Erros_Erros::ORCHESTRATOR_AO_CRIAR_VM_MSG_USER, $tec_msg);
+            throw new Extra_Exception_Infrasimples(Extra_Exception_Infrasimples::TYPE_ERROR, $msg);
+        }
+        curl_close($curl);
+
+        /**
+         * Extrair o id do XML de resposta
+         */
+        try {
+            $xml_orchestrator = new \SimpleXMLElement($response);
+            foreach ($xml_orchestrator->getDocNamespaces() as $strPrefixo => $strNome) {
+                if (strlen($strPrefixo) == 0) {
+                    $strPrefixo = "d";
+                }
+                $xml_orchestrator->registerXPathNamespace($strPrefixo, $strNome);
+            }
+            $resp = $xml_orchestrator->xpath("//d:Id");
+            Zend_Debug::dump($resp);
+        } catch (Exception $exc) {
+            $tec_msg = "Http Code: " . $httpcode . "</br>" . Zend_Debug::dump($info, "Error ao realizar o parse do XML do Orchestrator.", false) . "</br> Response: " . $response . "</br> Mensagem de erro: " . $exc->getMessage();
+            $msg = new Extra_Exception_Mensagem(Extra_Exception_Erros_Erros::ORCHESTRATOR_PARSE_DE_XML_VM_CODE, Extra_Exception_Erros_Erros::ORCHESTRATOR_PARSE_DE_XML_VM_MSG_USER, $tec_msg);
+            throw new Extra_Exception_Infrasimples(Extra_Exception_Infrasimples::TYPE_ERROR, $msg);
+        }
+        if (!isset($resp[0]) || $resp[0]->__toString() == "" || is_null($resp[0]->__toString())) {
+            $tec_msg = "Http Code: " . $httpcode . "</br>" . Zend_Debug::dump($info, "Id do runbook não encontrado no XML do Orchestrator.", false) . "</br> Response: " . $response;
+            $msg = new Extra_Exception_Mensagem(Extra_Exception_Erros_Erros::ORCHESTRATOR_ID_NAO_ENCONTRADO_NO_XML_VM_CODE, Extra_Exception_Erros_Erros::ORCHESTRATOR_ID_NAO_ENCONTRADO_NO_XML_VM_MSG_USER, $tec_msg);
+            throw new Extra_Exception_Infrasimples(Extra_Exception_Infrasimples::TYPE_ERROR, $msg);
+        }
+        if (strlen($resp[0]->__toString()) != 36) {
+            $tec_msg = "Http Code: " . $httpcode . "</br>" . Zend_Debug::dump($info, "Id do runbook de tamanho inesperado no XML do Orchestrator.", false) . "</br> Response: " . $response;
+            $msg = new Extra_Exception_Mensagem(Extra_Exception_Erros_Erros::ORCHESTRATOR_ID_DE_TAMANHO_INVALIDO_NO_XML_VM_CODE, Extra_Exception_Erros_Erros::ORCHESTRATOR_ID_DE_TAMANHO_INVALIDO_NO_XML_VM_MSG_USER, $tec_msg);
+            throw new Extra_Exception_Infrasimples(Extra_Exception_Infrasimples::TYPE_ERROR, $msg);
+        }
+        $co_runbook = $resp[0]->__toString();
+        return $co_runbook;
+    }
+
+    public function orchestrator_status($co_runbook) {
+        set_time_limit(1200);
+//        $co_runbook = "185b2dcc-7178-4088-a929-07a120e3419f";
+
+        $instances = 'Instances?$select=Status';
+        $curl = curl_init();
+        curl_setopt_array($curl, array(
+            CURLOPT_URL => "http://CBRNPAPLNT001.intra.caixa.gov.br:81/Orchestrator2012/Orchestrator.svc/Jobs(guid'" . $co_runbook . "')/$instances",
+            CURLOPT_RETURNTRANSFER => true,
+            CURLOPT_ENCODING => "",
+            CURLOPT_MAXREDIRS => 10,
+            CURLOPT_TIMEOUT => 30,
+            CURLOPT_HTTPAUTH => CURLAUTH_NTLM,
+            CURLOPT_UNRESTRICTED_AUTH => 1,
+            CURLOPT_USERPWD => "s725914:JY2h5Y6n3r",
+            CURLOPT_HTTP_VERSION => CURL_HTTP_VERSION_1_1,
+            CURLOPT_HEADER => 0,
+            CURLOPT_CUSTOMREQUEST => "GET",
+            CURLOPT_HTTPHEADER => array(
+                "Cache-Control: no-cache"
+            ),
+        ));
+
+        $response = curl_exec($curl);
+        $err = curl_error($curl);
+        curl_close($curl);
+
+        $xml_status_orchestrator = new \SimpleXMLElement($response);
+        foreach ($xml_status_orchestrator->getDocNamespaces() as $str_status_Prefixo => $str_status_Nome) {
+            if (strlen($str_status_Prefixo) == 0) {
+                $str_status_Prefixo = "d";
+            }
+            $xml_status_orchestrator->registerXPathNamespace($str_status_Prefixo, $str_status_Nome);
+        }
+        $resposta_status = $xml_status_orchestrator->xpath("//d:Status");
+        $resposta['status_orchestrator'] = NULL;
+        $res_status_orchestrator = $resposta_status[0]->__toString();
+        if (isset($res_status_orchestrator)) {
+            $resposta['status_orchestrator'] = $res_status_orchestrator;
+        } else if (!isset($res_status_orchestrator)) {
+            $resposta['status_orchestrator'] = "WARNING";
+        }
+        if(!is_null($resposta['status_orchestrator'])){
+            $resposta['status_orchestrator'] = strtoupper($resposta['status_orchestrator']);
+        }
+
+        return $resposta;
+    }
+
+    public function deletevmjenkins() {
+        $curl = curl_init();
+        curl_setopt_array($curl, array(
+            CURLOPT_URL => getenv('JENKINS_URL') . "/job/automacao_vms/build",
+            CURLOPT_RETURNTRANSFER => true,
+            CURLOPT_ENCODING => "",
+            CURLOPT_MAXREDIRS => 10,
+            CURLOPT_TIMEOUT => 30,
+            CURLOPT_HTTP_VERSION => CURL_HTTP_VERSION_1_1,
+            CURLOPT_CUSTOMREQUEST => "POST",
+            CURLOPT_POSTFIELDS => "json=$var_json",
+            CURLOPT_HTTPHEADER => array(
+                "Authorization: Basic " . getenv('JENKINS_TOKEN'),
+                "Cache-Control: no-cache",
+                "Content-Type: application/x-www-form-urlencoded",
+            ),
+        ));
+
+        $response = curl_exec($curl);
+        $err = curl_error($curl);
+        curl_close($curl);
+        if ($err) {
+            echo "cURL Error #:" . $err;
+        } else {
+            echo $response;
+        }
+    }
+
+    public function monitoravm() {
+        $curl = curl_init();
+        curl_setopt_array($curl, array(
+            CURLOPT_URL => getenv('JENKINS_URL') . "/job/automacao_vms/wfapi/runs",
+            CURLOPT_RETURNTRANSFER => true,
+            CURLOPT_ENCODING => "",
+            CURLOPT_MAXREDIRS => 10,
+            CURLOPT_TIMEOUT => 30,
+            CURLOPT_HTTP_VERSION => CURL_HTTP_VERSION_1_1,
+            CURLOPT_CUSTOMREQUEST => "GET",
+            CURLOPT_HTTPHEADER => array(
+                "Authorization: Basic " . getenv('JENKINS_TOKEN'),
+                "Cache-Control: no-cache",
+                "Content-Type: application/x-www-form-urlencoded",
+            ),
+        ));
+
+        set_time_limit(1200);
+        $response = curl_exec($curl);
+        $err = curl_error($curl);
+        curl_close($curl);
+        $res = json_decode($response, true);
+        $monitora_vm = $res[0]["id"];
+        return $monitora_vm;
+    }
+
+    public function dadosUltimas10Builds() {
+        $curl = curl_init();
+        curl_setopt_array($curl, array(
+            CURLOPT_URL => getenv('JENKINS_URL') . "/job/automacao_vms/wfapi/runs",
+            CURLOPT_RETURNTRANSFER => true,
+            CURLOPT_ENCODING => "",
+            CURLOPT_MAXREDIRS => 10,
+            CURLOPT_TIMEOUT => 30,
+            CURLOPT_HTTP_VERSION => CURL_HTTP_VERSION_1_1,
+            CURLOPT_CUSTOMREQUEST => "GET",
+            CURLOPT_HTTPHEADER => array(
+                "Authorization: Basic " . getenv('JENKINS_TOKEN'),
+                "Cache-Control: no-cache",
+                "Content-Type: application/x-www-form-urlencoded",
+            ),
+        ));
+
+        set_time_limit(1200);
+        $dados_ultimas_10_builds = curl_exec($curl);
+        $err = curl_error($curl);
+        curl_close($curl);
+        $dados_ultimas_10_builds = ltrim($dados_ultimas_10_builds, chr(239) . chr(187) . chr(191));
+        return Zend_Json::decode($dados_ultimas_10_builds);
+    }
+
+    public function codigosDasUltimas10Builds($dados_ultimas_10_builds = NULL) {
+        if (is_null($dados_ultimas_10_builds)) {
+            $dados_ultimas_10_builds = $this->dadosUltimas10Builds();
+        }
+        $codigos = array();
+        foreach ($dados_ultimas_10_builds as $build) {
+            $codigos[] = $build["id"];
+        }
+        return $codigos;
+    }
+
+    public function procuraCodigoDaBuildDoForm($co_form) {
+
+        $codigos_das_ultimas_10_builds = $this->codigosDasUltimas10Builds();
+        $nomes_paremetros = array('var_cd_ifs');
+        foreach ($codigos_das_ultimas_10_builds as $co_build) {
+            $parametros = $this->vmparametros($nomes_paremetros, $co_build);
+            if ($parametros['var_cd_ifs'] == $co_form) {
+                return $co_build;
+            }
+        }
+    }
+
+    public function procuraCodigoDaBuildDoFormPorNvezes($co_form, $qtd_vezes = 120, $sleep = 1) {
+
+        $time_limit = (int) $qtd_vezes * $sleep * 1.25;
+        set_time_limit($time_limit);
+        for ($index = 0; $index < $qtd_vezes; $index++) {
+            $co_build = $this->procuraCodigoDaBuildDoForm($co_form);
+            if (!is_null($co_build)) {
+                return $co_build;
+            }
+            sleep($sleep);
+        }
+    }
+
+    public function vmparametros($nomes_paremetros = array(), $co_build) {
+        $resp = array();
+//        $resultado = $this->monitoravm();
+//        Zend_Debug::dump($resultado);die;
+        $curl = curl_init();
+        $headers = array();
+        curl_setopt($curl, CURLOPT_HEADERFUNCTION, function($curl, $header) use (&$headers) {
+            $len = strlen($header);
+            $header = explode(':', $header, 2);
+            if (count($header) < 2) { // ignore invalid headers
+                return $len;
+            }
+            $name = strtolower(trim($header[0]));
+            if (!array_key_exists($name, $headers)) {
+                $headers[$name] = array(trim($header[1]));
+            } else {
+                $headers[$name][] = trim($header[1]);
+            }
+            return $len;
+        });
+        $options = array(
+            CURLOPT_URL => getenv('JENKINS_URL') . "/j_acegi_security_check",
+            CURLOPT_RETURNTRANSFER => true,
+            CURLOPT_ENCODING => "",
+            CURLOPT_MAXREDIRS => 10,
+            CURLOPT_TIMEOUT => 30,
+            CURLOPT_HTTP_VERSION => CURL_HTTP_VERSION_1_1,
+            CURLOPT_CUSTOMREQUEST => "POST",
+            CURLOPT_HTTPHEADER => array(
+                "Accept: text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8",
+                "Accept-Language: pt-BR,pt;q=0.8,en-US;q=0.5,en;q=0.3",
+                "Accept-Encoding: gzip, deflate",
+                "Upgrade-Insecure-Requests: 1"
+        ));
+        $options[CURLOPT_POSTFIELDS] = "&j_username=" . urlencode('SVMSBP01') . "&j_password=" . urlencode("h6rb286x") . "&from=" . urlencode("/") . "&Submit=" . urlencode("Sign+in");
+        curl_setopt_array($curl, $options);
+        $response_login = curl_exec($curl);
+        $httpcode = curl_getinfo($curl, CURLINFO_HTTP_CODE);
+        /**
+         * http 302 found
+         */
+        if ((int) curl_errno($curl) > 0 || $httpcode != 302) {
+            $info = curl_getinfo($curl);
+            $tec_msg = "Http Code: " . $httpcode . "</br>" . Zend_Debug::dump($info, "info curl array", false) . "</br>" . $response_login;
+            $msg = new Extra_Exception_Mensagem(Extra_Exception_Erros_Erros::JEKINS_AO_REALIZAR_LOGIN_CODE, Extra_Exception_Erros_Erros::JEKINS_AO_REALIZAR_LOGIN_MSG_USER, $tec_msg);
+            throw new Extra_Exception_Infrasimples(Extra_Exception_Infrasimples::TYPE_ERROR, $msg);
+        }
+        curl_close($curl);
+        $headers_response_login = $headers;
+//        Zend_Debug::dump($headers_response_login, '$headers_response_login');
+
+        $headers_propagate = array();
+        $cookie = array();
+        foreach ($headers_response_login as $response_key => $response_value) {
+            if ($response_key == "set-cookie") {
+                foreach ($response_value as $response_cookie) {
+                    $c0 = explode(';', $response_cookie);
+                    $c1 = explode('=', $c0[0]);
+                    $response_cookie_name = $c1[0];
+                    $response_cookie_value = $c1[1];
+                    $cookie[] = $response_cookie_name . '=' . $response_cookie_value;
+                }
+            }
+        }
+        $headers_propagate[] = 'Cookie: ' . implode(';', $cookie);
+        //Zend_Debug::dump($headers_propagate, '$headers_propagate Cookie');
+
+
+        $curl = curl_init();
+        $options = array(
+            CURLOPT_URL => getenv('JENKINS_URL') . "/job/automacao_vms/$co_build/api/json?pretty=true",
+            CURLOPT_RETURNTRANSFER => true,
+            CURLOPT_ENCODING => "",
+            CURLOPT_MAXREDIRS => 10,
+            CURLOPT_TIMEOUT => 30,
+            CURLOPT_HTTP_VERSION => CURL_HTTP_VERSION_1_1,
+            CURLOPT_CUSTOMREQUEST => "GET",
+            CURLOPT_HTTPHEADER => array(
+                "Accept: text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8",
+                "Accept-Language: pt-BR,pt;q=0.8,en-US;q=0.5,en;q=0.3",
+                "Accept-Encoding: gzip, deflate",
+                "Connection: keep-alive",
+                "Upgrade-Insecure-Requests: 1",
+                "Cache-Control: max-age=0"
+        ));
+        if (!empty($headers_propagate)) {
+            foreach ($headers_propagate as $v) {
+                $options[CURLOPT_HTTPHEADER][] = $v;
+            }
+        }
+        curl_setopt_array($curl, $options);
+        $response = curl_exec($curl);
+        $httpcode = curl_getinfo($curl, CURLINFO_HTTP_CODE);
+        if ((int) curl_errno($curl) > 0 || $httpcode != 200) {
+            $info = curl_getinfo($curl);
+            $tec_msg = "Http Code: " . $httpcode . "</br>" . Zend_Debug::dump($info, "info curl array", false) . "</br>" . $response;
+            $msg = new Extra_Exception_Mensagem(Extra_Exception_Erros_Erros::JEKINS_AO_RECUPERAR_CODIGO_DA_BUILD_CODE, Extra_Exception_Erros_Erros::JEKINS_AO_RECUPERAR_CODIGO_DA_BUILD_MSG_USER, $tec_msg);
+            throw new Extra_Exception_Infrasimples(Extra_Exception_Infrasimples::TYPE_ERROR, $msg);
+        }
+        curl_close($curl);
+//        Zend_Debug::dump($response,'$response');
+
+        $response = ltrim($response, chr(239) . chr(187) . chr(191));
+        $response_arr = Zend_Json::decode($response);
+//        Zend_Debug::dump($response_arr,'$response_arr');die;
+        $parameters = $response_arr["actions"][0]["parameters"];
+        $var_vm_cd_infrasimples = null;
+        $extract_parameters = array();
+//        Zend_Debug::dump($parameters);
+        foreach ($parameters as $parameter) {
+            foreach ($nomes_paremetros as $parametro) {
+                if ($parameter["name"] == $parametro) {
+                    $extract_parameters[$parametro] = $parameter["value"];
+                }
+            }
+        }
+        return $extract_parameters;
+    }
+
+    public function consultaLog($co_build) {
+        set_time_limit(1200);
+        $resp = array();
+        $curl = curl_init();
+        curl_setopt_array($curl, array(
+            CURLOPT_URL => getenv('JENKINS_URL') . "/job/automacao_vms/$co_build/wfapi/describe",
+            CURLOPT_RETURNTRANSFER => true,
+            CURLOPT_ENCODING => "",
+            CURLOPT_MAXREDIRS => 10,
+            CURLOPT_TIMEOUT => 30,
+            CURLOPT_HTTP_VERSION => CURL_HTTP_VERSION_1_1,
+            CURLOPT_CUSTOMREQUEST => "GET",
+            CURLOPT_HTTPHEADER => array(
+                "Authorization: Basic " . getenv('JENKINS_TOKEN'),
+                "Cache-Control: no-cache",
+                "Content-Type: application/x-www-form-urlencoded",
+            ),
+        ));
+        $response = curl_exec($curl);
+        $err = curl_error($curl);
+        curl_close($curl);
+        $res = json_decode($response, true);
+//        
+//        Zend_Debug::dump($res);\
+        $monitora = $res["stages"];
+        $resposta = null;
+        /**
+         * @$excecoes
+         * Mensagens que podem ter erros e não influênciam o resultado 
+         * da criação da vm.
+         */
+        $excecoes = array();
+        foreach ($monitora as $v) {
+            if (isset($v['id'])) {
+                $resposta['id_status'] = $v['id'];
+            }
+            if (isset($v['name'])) {
+                $resposta['id_vm'] = $v['name'];
+            }
+            if (isset($v['error'])) {
+                $error = $v['error'];
+                foreach ($error as $v2) {
+                    $resposta['message_error'] = $error['message'];
+                    $resposta['type_error'] = $error['type'];
+                }
+            }
+            if (isset($v['status'])) {
+                $resposta['status_vm'] = $v['status'];
+                if ($v['status'] == "FAILED") {
+                    if (!in_array($error['message'], $excecoes)) {
+                        break;
+                    }
+                }
+            }
+        }
+        if (isset($res['status'])) {
+            $resposta['status_build'] = $res['status'];
+        }
+//        Zend_Debug::dump($resposta);
+        return $resposta;
+    }
+
+}
+
+?>
