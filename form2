@@ -1,0 +1,4 @@
+<option selected="" ></option>
+<?php foreach ($this->verticais['Vertical'] as $vertical) : ?>
+    <option><?php echo $vertical['entry'] ?></option>
+<?php endforeach; ?>
