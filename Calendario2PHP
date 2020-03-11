@@ -1,0 +1,412 @@
+$tabela = new DadosRecInterfaceSigcr();
+        $util = new UtilDAO();
+        $resposta = array();
+        $data = explode('/', $dataSessao);
+        $ano = $data[0];
+        $mes = $data[1];
+        $ano2 = substr($ano, 2, 2);
+        $dataSessao = $ano2 . $mes . "01";
+        $dataSessao2 = $ano . "-" . $mes . "-" . "01";
+        
+        $data_hora = date("H:i");
+        
+        $db = Zend_Db_Table_Abstract::getDefaultAdapter();
+
+        $dt_fim = "31-" . $mes . "-" . $ano;
+        $feriado = $util->verificaFeriado($dataSessao);
+        $resultado_final = array();
+
+
+//########################################################################################################################
+//############################################## Inicio ##################################################################
+//########################################################################################################################
+//############################## Transmissão de Arquivos a CIP - Prospecção ##############################################
+////######################################################################################################################
+//########################################################################################################################
+        $select_ind51_2 = "SELECT max(dt_data_hora) dt_data_hora_51, odate as odate_51, max(hora) hora_51, co_indicador
+                            FROM pdb.pdbtb191_portabilidade_sigec
+                            where odate >= '$dataSessao'
+                            and co_indicador = 'actc101'
+                            group by odate, co_indicador
+                            order by odate desc";
+        $resultados_ind51_2 = $db->fetchAll($select_ind51_2);
+
+        $select_ind54_2 = "SELECT max(dt_data_hora) dt_data_hora_54, odate as odate_54, max(hora) hora_54, co_indicador
+                            FROM pdb.pdbtb191_portabilidade_sigec
+                            where odate >= '$dataSessao'
+                            and co_indicador = 'actc201'
+                            group by odate, co_indicador
+                            order by odate desc";
+        $resultados_ind54_2 = $db->fetchAll($select_ind54_2);
+
+        $select_ind52_2 = "SELECT max(dt_data_hora) dt_data_hora_52, odate as odate_52, max(hora) hora_52, co_indicador
+                            FROM pdb.pdbtb191_portabilidade_sigec
+                            where odate >= '$dataSessao'
+                            and co_indicador = 'actc301'
+                            group by odate, co_indicador
+                            order by odate desc";
+        $resultados_ind52_2 = $db->fetchAll($select_ind52_2);
+
+        $select_ind53_2 = "SELECT max(dt_data_hora) dt_data_hora_53, odate as odate_53, max(hora) hora_53, co_indicador
+                            FROM pdb.pdbtb191_portabilidade_sigec
+                            where odate >= '$dataSessao'
+                            and co_indicador = 'actc401'
+                            group by odate, co_indicador
+                            order by odate desc";
+        $resultados_ind53_2 = $db->fetchAll($select_ind53_2);
+
+        $select_indti007a001 = "SELECT max(dt_data_hora) dt_data_hora_007, max(indti007a001) indti007a001, indti008a001
+                                FROM bruo.bruotbc_sigec_001a_a_c101
+				where indti008a001 >= '$dataSessao2'
+                                group by indti008a001
+                                order by indti008a001 desc";
+        $resultados_indti007a001 = $db->fetchAll($select_indti007a001);
+
+        foreach ($resultados_ind51_2 as $resultado):
+            if (isset($resultado['odate_51'])) {
+                $dt_inicio = $util->transformaOdateData($resultado['odate_51']);
+                $hr_inicio = $util->transformaHoraData($resultado['hora_51']);
+            }
+            if ($resultado['co_indicador'] == 'actc101') {
+                $data51 = substr($util->transformarDataBr2($resultado['dt_data_hora_51']), 0, 16);
+                $odate_51 = $util->transformaOdateData($resultado['odate_51']);
+                $data_inicio = date($odate_51 . ' 09:00');
+                $data_inicio_red = date('09:30');
+                $data_fim = date($odate_51 . ' 18:00');
+
+                if (($data51 >= $data_inicio) && ($data51 <= $data_fim)) {
+                    $resposta[$dt_inicio]['dataProspConsignado'] = $data51;
+                    $resposta[$dt_inicio]['odateProspConsignado'] = $odate_51;
+                    $resposta[$dt_inicio]['diaProspConsignado'] = $odate_51;
+                    $resposta[$dt_inicio]['msgProspConsignado'] = "Grade: 09h as 18h";
+                    $resposta[$dt_inicio]['colorProspConsignado'] = "#99CC00";
+                } else if (($data51 < $data_inicio) || ($data51 > $data_fim)) {
+                    $resposta[$dt_inicio]['dataProspConsignado'] = $util->transformarDataBr2($resultado['dt_data_hora_51']);
+                    $resposta[$dt_inicio]['odateProspConsignado'] = $util->transformaOdateData($resultado['odate_51']);
+                    $resposta[$dt_inicio]['diaProspConsignado'] = $util->transformaOdateData($resultado['odate_51']);
+                    $resposta[$dt_inicio]['msgProspConsignado'] = "Grade: 09h as 18h";
+                    $resposta[$dt_inicio]['colorProspConsignado'] = "red";
+                }
+            }
+        endforeach;
+
+        foreach ($resultados_ind54_2 as $resultado2):
+            if (isset($resultado2['odate_54'])) {
+                $dt_inicio2 = $util->transformaOdateData($resultado2['odate_54']);
+                $hr_inicio2 = $util->transformaHoraData($resultado2['hora_54']);
+            }
+            if ($resultado2['co_indicador'] == 'actc201') {
+                $data54 = substr($util->transformarDataBr2($resultado2['dt_data_hora_54']), 0, 16);
+                $odate_54 = $util->transformaOdateData($resultado2['odate_54']);
+                $data_inicio1 = date($odate_54 . ' 09:00');
+                $data_fim1 = date($odate_54 . ' 18:00');
+                if (($data54 >= $data_inicio1) && ($data54 <= $data_fim1)) {
+                    $resposta[$dt_inicio2]['dataProspHabitacao'] = $data54;
+                    $resposta[$dt_inicio2]['odateProspHabitacao'] = $odate_54;
+                    $resposta[$dt_inicio2]['diaProspHabitacao'] = $odate_54;
+                    $resposta[$dt_inicio2]['msgProspHabitacao'] = "Grade: 09h as 18h";
+                    $resposta[$dt_inicio2]['colorProspHabitacao'] = "#99CC00";
+                } else {
+                    $resposta[$dt_inicio2]['dataProspHabitacao'] = $data54;
+                    $resposta[$dt_inicio2]['odateProspHabitacao'] = $odate_54;
+                    $resposta[$dt_inicio2]['diaProspHabitacao'] = $odate_54;
+                    $resposta[$dt_inicio2]['msgProspHabitacao'] = "Grade: 09h as 18h";
+                    $resposta[$dt_inicio2]['colorProspHabitacao'] = "red";
+                }
+            }
+        endforeach;
+
+        foreach ($resultados_ind52_2 as $resultado3):
+            if (isset($resultado3['odate_52'])) {
+                $dt_inicio3 = $util->transformaOdateData($resultado3['odate_52']);
+                $hr_inicio3 = $util->transformaHoraData($resultado3['hora_52']);
+            }
+
+            if ($resultado3['co_indicador'] == 'actc301') {
+                $data52 = substr($util->transformarDataBr2($resultado3['dt_data_hora_52']), 0, 16);
+                $odate_52 = $util->transformaOdateData($resultado3['odate_52']);
+                $data_inicio2 = date($odate_52 . ' 09:00');
+                $data_fim2 = date($odate_52 . ' 18:00');
+                if (($data52 >= $data_inicio2) && ($data52 <= $data_fim2)) {
+                    $resposta[$dt_inicio3]['dataProspPessoal'] = $data52;
+                    $resposta[$dt_inicio3]['odateProspPessoal'] = $odate_52;
+                    $resposta[$dt_inicio3]['diaProspPessoal'] = $odate_52;
+                    $resposta[$dt_inicio3]['msgProspPessoal'] = "Grade: 09h as 18h";
+                    $resposta[$dt_inicio3]['colorProspPessoal'] = "#99cc00";
+                } else {
+                    $resposta[$dt_inicio3]['dataProspPessoal'] = $data52;
+                    $resposta[$dt_inicio3]['odateProspPessoal'] = $odate_52;
+                    $resposta[$dt_inicio3]['diaProspPessoal'] = $odate_52;
+                    $resposta[$dt_inicio3]['msgProspPessoal'] = "Grade: 09h as 18h";
+                    $resposta[$dt_inicio3]['colorProspPessoal'] = "red";
+                }
+            }
+
+        endforeach;
+
+        foreach ($resultados_ind53_2 as $resultado4):
+            if (isset($resultado4['odate_53'])) {
+                $dt_inicio4 = substr($util->transformaOdateData($resultado4['odate_53']), 0, 16);
+                $hr_inicio4 = $util->transformaHoraData($resultado4['hora_53']);
+            }
+            if ($resultado4['co_indicador'] == 'actc401') {
+                $data53 = $util->transformarDataBr2($resultado4['dt_data_hora_53']);
+                $odate_53 = $util->transformaOdateData($resultado4['odate_53']);
+                $data_inicio3 = date($odate_53 . ' 09:00');
+                $data_fim3 = date($odate_53 . ' 18:00');
+                if (($data53 >= $data_inicio3) && ($data53 <= $data_fim3)) {
+                    $resposta[$dt_inicio4]['dataProspVeiculos'] = $data53;
+                    $resposta[$dt_inicio4]['odateProspVeiculos'] = $odate_53;
+                    $resposta[$dt_inicio4]['diaProspVeiculos'] = $odate_53;
+                    $resposta[$dt_inicio4]['msgProspVeiculos'] = "Grade: 09h as 18h";
+                    $resposta[$dt_inicio4]['colorProspVeiculos'] = "#99CC00";
+                } else {
+                    $resposta[$dt_inicio4]['dataProspVeiculos'] = $data53;
+                    $resposta[$dt_inicio4]['odateProspVeiculos'] = $odate_53;
+                    $resposta[$dt_inicio4]['diaProspVeiculos'] = $odate_53;
+                    $resposta[$dt_inicio4]['msgProspVeiculos'] = "Grade: 09h as 18h";
+                    $resposta[$dt_inicio4]['colorProspVeiculos'] = "red";
+                }
+            }
+        endforeach;
+
+        foreach ($resultados_indti007a001 as $resultado5):
+            if (isset($resultado5['indti008a001'])) {
+                $dt_inicio5 = $util->transformarDataBr($resultado5['indti008a001']);
+            }
+            if (isset($resultado5['indti007a001'])) {
+                $data_indti007 = substr($util->transformarDataBr2($resultado5['indti007a001']), 0, 16);
+                $odate_indti007 = $util->transformaDataTela($resultado5['indti008a001']);
+                $data_inicio4 = date($odate_indti007 . ' 07:00');
+                $data_inicio4_red = date($odate_indti007 . ' 08:30');
+                $data_fim4 = date($odate_indti007 . ' 19:00');
+                
+                if (($data_indti007 >= $data_inicio4) && ($data_indti007 <= $data_fim4)) {
+                    $resposta[$dt_inicio5]['dataProspSalario'] = $data_indti007;
+                    $resposta[$dt_inicio5]['odateProspSalario'] = $odate_indti007;
+                    $resposta[$dt_inicio5]['diaProspSalario'] = $odate_indti007;
+                    $resposta[$dt_inicio5]['msgProspSalario'] = "Grade: 07h as 19h";
+                    $resposta[$dt_inicio5]['colorProspSalario'] = "#99CC00";
+                } else if (($data_indti007 < $data_inicio4) || ($data_indti007 > $data_fim4)) {
+                    $resposta[$dt_inicio5]['dataProspSalario'] = $data_indti007;
+                    $resposta[$dt_inicio5]['odateProspSalario'] = $odate_indti007;
+                    $resposta[$dt_inicio5]['diaProspSalario'] = $odate_indti007;
+                    $resposta[$dt_inicio5]['msgProspSalario'] = "Grade: 07h as 19h";
+                    $resposta[$dt_inicio5]['colorProspSalario'] = "red";
+                } 
+            }
+        endforeach;
+
+//########################################################################################################################
+//################################################ Fim ###################################################################
+//########################################################################################################################
+//
+//########################################################################################################################
+//############################################## Inicio ##################################################################
+//########################################################################################################################
+//################################ Transmissão de Arquivos a CIP - Resposta ##############################################
+////######################################################################################################################
+//########################################################################################################################
+
+        $select_ind51 = "SELECT max(dt_data_hora) dt_data_hora_51a, odate as odate_51a, max(hora) hora_51a, co_indicador
+                            FROM pdb.pdbtb191_portabilidade_sigec
+                            where odate >= '$dataSessao'
+                            and co_indicador = 'actc103'
+                            group by odate, co_indicador
+                            order by odate desc";
+        $resultados_ind51 = $db->fetchAll($select_ind51);
+
+        $select_ind54 = "SELECT max(dt_data_hora) dt_data_hora_54a, odate as odate_54a, max(hora) hora_54a, co_indicador
+                            FROM pdb.pdbtb191_portabilidade_sigec
+                            where odate >= '$dataSessao'
+                            and co_indicador = 'actc203'
+                            group by odate, co_indicador
+                            order by odate desc";
+        $resultados_ind54 = $db->fetchAll($select_ind54);
+
+        $select_ind52 = "SELECT max(dt_data_hora) dt_data_hora_52a, odate as odate_52a, max(hora) hora_52a, co_indicador
+                            FROM pdb.pdbtb191_portabilidade_sigec
+                            where odate >= '$dataSessao'
+                            and co_indicador = 'actc303'
+                            group by odate, co_indicador
+                            order by odate desc";
+        $resultados_ind52 = $db->fetchAll($select_ind52);
+
+        $select_ind53 = "SELECT max(dt_data_hora) dt_data_hora_53a, odate as odate_53a, max(hora) hora_53a, co_indicador
+                            FROM pdb.pdbtb191_portabilidade_sigec
+                            where odate >= '$dataSessao'
+                            and co_indicador = 'actc403'
+                            group by odate, co_indicador
+                            order by odate desc";
+        $resultados_ind53 = $db->fetchAll($select_ind53);
+
+
+        $select_indti009a001 = "SELECT max(dt_data_hora) dt_data_hora_007, max(indti009a001) indti009a001, indti010a001
+                                FROM bruo.bruotbc_sigec_001a_a_c103
+				where indti010a001 >= '$dataSessao2'
+                                group by indti010a001
+                                order by indti010a001 desc";
+        $resultados_indti009a001 = $db->fetchAll($select_indti009a001);
+
+
+        foreach ($resultados_ind51 as $resultado6):
+            if (isset($resultado6['odate_51a'])) {
+                $dt_inicio6 = $util->transformaOdateData($resultado6['odate_51a']);
+                $hr_inicio6 = $util->transformaHoraData($resultado6['hora_51a']);
+            }
+            if ($resultado6['co_indicador'] == 'actc103') {
+                $data51a = substr($util->transformarDataBr2($resultado6['dt_data_hora_51a']), 0, 16);
+                $odate_51a = $util->transformaOdateData($resultado6['odate_51a']);
+                $data_inicio5 = date($odate_51a . ' 05:00');
+                $data_inicio5_red = date($odate_51a . ' 08:30');
+                $data_fim5 = date($odate_51a . ' 10:00');
+
+                if (($data51a >= $data_inicio5) && ($data51a <= $data_fim5)) {
+                    $resposta[$dt_inicio6]['dataResConsignado'] = $data51a;
+                    $resposta[$dt_inicio6]['odateResConsignado'] = $odate_51a;
+                    $resposta[$dt_inicio6]['diaResConsignado'] = $odate_51a;
+                    $resposta[$dt_inicio6]['msgResConsignado'] = "Grade: 05h as 10h";
+                    $resposta[$dt_inicio6]['colorResConsignado'] = "#99CC00";
+                } else if (($data51a < $data_inicio5) || ($data51a > $data_fim5)) {
+                    $resposta[$dt_inicio6]['dataResConsignado'] = $data51a;
+                    $resposta[$dt_inicio6]['odateResConsignado'] = $odate_51a;
+                    $resposta[$dt_inicio6]['diaResConsignado'] = $odate_51a;
+                    $resposta[$dt_inicio6]['msgResConsignado'] = "Grade: 05h as 10h";
+                    $resposta[$dt_inicio6]['colorResConsignado'] = "red";
+                } 
+            }
+        endforeach;
+
+        foreach ($resultados_ind54 as $resultado7):
+            if (isset($resultado7['odate_54a'])) {
+                $dt_inicio7 = $util->transformaOdateData($resultado7['odate_54a']);
+                $hr_inicio7 = $util->transformaHoraData($resultado7['hora_54a']);
+            }
+            if ($resultado7['co_indicador'] == 'actc203') {
+                $data54a = substr($util->transformarDataBr2($resultado7['dt_data_hora_54a']), 0, 16);
+                $odate_54a = $util->transformaOdateData($resultado7['odate_54a']);
+                $data_inicio6 = date($odate_54a . ' 05:00');
+                $data_fim6 = date($odate_54a . ' 18:00');
+                if (($data54a >= $data_inicio6) && ($data54a <= $data_fim6)) {
+                    $resposta[$dt_inicio7]['dataResHabitacao'] = $data54a;
+                    $resposta[$dt_inicio7]['odateResHabitacao'] = $odate_54a;
+                    $resposta[$dt_inicio7]['diaResHabitacao'] = $odate_54a;
+                    $resposta[$dt_inicio7]['msgResHabitacao'] = "Grade: 05h as 18h";
+                    $resposta[$dt_inicio7]['colorResHabitacao'] = "#99CC00";
+                } else {
+                    $resposta[$dt_inicio7]['dataResHabitacao'] = $data54a;
+                    $resposta[$dt_inicio7]['odateResHabitacao'] = $odate_54a;
+                    $resposta[$dt_inicio7]['diaResHabitacao'] = $odate_54a;
+                    $resposta[$dt_inicio7]['msgResHabitacao'] = "Grade: 05h as 18h";
+                    $resposta[$dt_inicio7]['colorResHabitacao'] = "red";
+                }
+            }
+        endforeach;
+
+        foreach ($resultados_ind52 as $resultado8):
+            if (isset($resultado8['odate_52a'])) {
+                $dt_inicio8 = $util->transformaOdateData($resultado8['odate_52a']);
+                $hr_inicio8 = $util->transformaHoraData($resultado8['hora_52a']);
+            }
+            if ($resultado8['co_indicador'] == 'actc303') {
+                $data52a = substr($util->transformarDataBr2($resultado8['dt_data_hora_52a']), 0, 16);
+                $odate_52a = $util->transformaOdateData($resultado8['odate_52a']);
+                $data_inicio7 = date($odate_52a . ' 05:00');
+                $data_fim7 = date($odate_52a . ' 10:00');
+                if (($data52a >= $data_inicio7) && ($data52a <= $data_fim7)) {
+                    $resposta[$dt_inicio8]['dataResPessoal'] = $data52a;
+                    $resposta[$dt_inicio8]['odateResPessoal'] = $odate_52a;
+                    $resposta[$dt_inicio8]['diaResPessoal'] = $odate_52a;
+                    $resposta[$dt_inicio8]['msgResPessoal'] = "Grade: 05h as 10h";
+                    $resposta[$dt_inicio8]['colorResPessoal'] = "#99CC00";
+                } else {
+                    $resposta[$dt_inicio8]['dataResPessoal'] = $data52a;
+                    $resposta[$dt_inicio8]['odateResPessoal'] = $odate_52a;
+                    $resposta[$dt_inicio8]['diaResPessoal'] = $odate_52a;
+                    $resposta[$dt_inicio8]['msgResPessoal'] = "Grade: 05h as 10h";
+                    $resposta[$dt_inicio8]['colorResPessoal'] = "red";
+                }
+            }
+        endforeach;
+
+        foreach ($resultados_ind53 as $resultado9):
+            if (isset($resultado9['odate_53a'])) {
+                $dt_inicio9 = $util->transformaOdateData($resultado9['odate_53a']);
+                $hr_inicio9 = $util->transformaHoraData($resultado9['hora_53a']);
+            }
+            if ($resultado9['co_indicador'] == 'actc403') {
+                $data53a = substr($util->transformarDataBr2($resultado9['dt_data_hora_53a']), 0, 16);
+                $odate_53a = $util->transformaOdateData($resultado9['odate_53a']);
+                $data_inicio8 = date($odate_53a . ' 05:00');
+                $data_fim8 = date($odate_53a . ' 10:00');
+                if (($data53a >= $data_inicio8) && ($data53a <= $data_fim8)) {
+                    $resposta[$dt_inicio9]['dataResVeiculos'] = $data53a;
+                    $resposta[$dt_inicio9]['odateResVeiculos'] = $odate_53a;
+                    $resposta[$dt_inicio9]['diaResVeiculos'] = $odate_53a;
+                    $resposta[$dt_inicio9]['msgResVeiculos'] = "Grade: 05h as 10h";
+                    $resposta[$dt_inicio9]['colorResVeiculos'] = "#99CC00";
+                } else {
+                    $resposta[$dt_inicio9]['dataResVeiculos'] = $data53a;
+                    $resposta[$dt_inicio9]['odateResVeiculos'] = $odate_53a;
+                    $resposta[$dt_inicio9]['diaResVeiculos'] = $odate_53a;
+                    $resposta[$dt_inicio9]['msgResVeiculos'] = "Grade: 05h as 10h";
+                    $resposta[$dt_inicio9]['colorResVeiculos'] = "red";
+                }
+            }
+        endforeach;
+
+
+        foreach ($resultados_indti009a001 as $resultado010):
+            if (isset($resultado010['indti010a001'])) {
+                $dt_inicio10 = $util->transformarDataBr($resultado010['indti010a001']);
+            }
+            if (isset($resultado010['indti009a001'])) {
+                $data_indti009 = substr($util->transformarDataBr2($resultado010['indti009a001']), 0, 16);
+                $odate_indti009 = $util->transformaDataTela($resultado010['indti010a001']);
+                $data_inicio9 = date($odate_indti009 . ' 10:00');
+                $data_inicio9_red = date($odate_indti009 . ' 10:30');
+                $data_fim9 = date($odate_indti009 . ' 19:00');
+
+                if (($data_indti009 >= $data_inicio9) && ($data_indti009 <= $data_fim9)) {
+                    $resposta[$dt_inicio10]['dataResSalario'] = $data_indti009;
+                    $resposta[$dt_inicio10]['odateResSalario'] = $odate_indti009;
+                    $resposta[$dt_inicio10]['diaResSalario'] = $odate_indti009;
+                    $resposta[$dt_inicio10]['msgResSalario'] = "Grade: 10h as 19h";
+                    $resposta[$dt_inicio10]['colorResSalario'] = "#99CC00";
+                } else if (($data_indti009 < $data_inicio9) || ($data_indti009 > $data_fim9)) {
+                    $resposta[$dt_inicio10]['dataResSalario'] = $data_indti009;
+                    $resposta[$dt_inicio10]['odateResSalario'] = $odate_indti009;
+                    $resposta[$dt_inicio10]['diaResSalario'] = $odate_indti009;
+                    $resposta[$dt_inicio10]['msgResSalario'] = "Grade: 10h as 19h";
+                    $resposta[$dt_inicio10]['colorResSalario'] = "red";
+                } 
+            }
+        endforeach;
+
+//########################################################################################################################
+//################################################ Fim ###################################################################
+//########################################################################################################################
+        $i = 0;
+        $array_month = array();
+        //Monta o mês inteiro
+        $numero = cal_days_in_month(CAL_GREGORIAN, $mes, $ano); // 31 
+        for ($i = 1; $i <= $numero; $i++):
+            $array_month[$i] = array();
+        endfor;
+        $array_ordenado = array();
+        $dia = 1;
+        /**
+         *  Roda o mês inteiro, pegando a chave do mês para index do array
+         *  Popula o array, de acordo com a chave caso seja igual
+         */
+        foreach ($array_month as $chave => $dados) {
+            $array_ordenado[$chave] = array();
+            foreach ($resposta as $key => $value) {
+                if ($chave == $key) {
+                    $array_ordenado[$chave] = $value;
+                }
+            }
+        }
+        $mesInterface['mesInterface'] = $array_ordenado;
+        return $mesInterface;
+    }
