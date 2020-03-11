@@ -1,0 +1,302 @@
+<?php
+
+class VmForm extends Zend_Form {
+
+    public $_type;
+
+    public function __construct($options = null) {
+        parent::__construct($options);
+
+        $this->_type = $options['type'];
+        $this->setName('vm');
+
+        $dec = array(
+            'ViewHelper',
+            array('HtmlTag', array('tag' => 'span'))
+//            array('Label', array('tag' => 'span', 'class' => 'label_input_sistema')),
+        );
+
+        if ($options['type'] == 'add') {
+
+
+            $site = new Zend_Form_Element_Select('site');
+            $site->setRequired(true)
+                    ->addValidator('NotEmpty')
+                    ->setAttrib('class', 'custom-select d-block w-100')
+                    ->setAttrib('id', 'sites')
+                    ->setAttrib('required', 'required')
+                    ->removeDecorator('DtDdWrapper')
+                    ->removeDecorator('Label')
+                    ->removeDecorator('HtmlTag');
+            $site->addMultiOption('', '');
+            try {
+                $rede = new RedeDAO();
+                $data_sites = $rede->getSites();
+                //Zend_Debug::dump($data_sites);
+                //exit;
+                foreach ($data_sites['Site'] as $site_name) {
+                    $site->addMultiOption($site_name, $site_name);
+                }
+            } catch (Exception $exc) {
+                
+            }
+
+
+            $vertical = new Zend_Form_Element_Select('vertical');
+            $vertical->setRequired(true)
+                    ->addValidator('NotEmpty')
+                    ->setAttrib('class', 'custom-select d-block w-100')
+                    ->setAttrib('id', 'verticais')
+                    ->setAttrib('required', 'required')
+                    ->removeDecorator('DtDdWrapper')
+                    ->removeDecorator('Label')
+                    ->removeDecorator('HtmlTag');
+            $vertical->addMultiOption('', '');
+
+
+            $ambiente = new Zend_Form_Element_Select('ambiente');
+            $ambiente->setRequired(true)
+                    ->addValidator('NotEmpty')
+                    ->setAttrib('class', 'custom-select d-block w-100')
+                    ->setAttrib('id', 'ambientes')
+                    ->setAttrib('required', 'required')
+                    ->removeDecorator('DtDdWrapper')
+                    ->removeDecorator('Label')
+                    ->removeDecorator('HtmlTag');
+            $ambiente->addMultiOption('', '');
+
+            $rede = new Zend_Form_Element_Select('rede');
+            $rede->setRequired(true)
+                    ->addValidator('NotEmpty')
+                    ->setAttrib('class', 'custom-select d-block w-100')
+                    ->setAttrib('id', 'redes')
+                    ->setAttrib('required', 'required')
+                    ->removeDecorator('DtDdWrapper')
+                    ->removeDecorator('Label')
+                    ->removeDecorator('HtmlTag');
+            $rede->addMultiOption('', '');
+
+            $unidade = new Zend_Form_Element_Select('unidade');
+            $unidade->setRequired(true)
+                    ->addValidator('NotEmpty')
+                    ->setAttrib('class', 'custom-select d-block w-100')
+                    ->setAttrib('id', 'unidades')
+                    ->setAttrib('required', 'required')
+                    ->removeDecorator('DtDdWrapper')
+                    ->removeDecorator('Label')
+                    ->removeDecorator('HtmlTag');
+            $unidade->addMultiOption('', '');
+            try {
+                $unidadedao = new RedeDAO();
+                $data_unidades = $unidadedao->getUnidades();
+                foreach ($data_unidades['Unidade'] as $unidade_name) {
+                    $unidade->addMultiOption($unidade_name, $unidade_name);
+                }
+            } catch (Exception $exc) {
+                
+            }
+
+
+            $categoria = new Zend_Form_Element_Select('categoria');
+
+            $categoria->setRequired(true)
+                    ->addValidator('NotEmpty')
+                    ->setAttrib('class', 'custom-select d-block w-100')
+                    ->setAttrib('id', 'categorias')
+                    ->setAttrib('required', 'required')
+                    ->removeDecorator('DtDdWrapper')
+                    ->removeDecorator('Label')
+                    ->removeDecorator('HtmlTag');
+            $categoria->addMultiOption('', '');
+            $categoria->addMultiOption('Linux', 'Linux');
+            $categoria->addMultiOption('Unix', 'Unix');
+            $categoria->addMultiOption('Windows', 'Windows');
+
+
+
+            $var_vm_cpus = new Zend_Form_Element_Select('var_vm_cpus');
+            $var_vm_cpus->setRequired(true)
+                    ->addValidator('NotEmpty')
+                    ->setAttrib('class', 'custom-select d-block w-100')
+                    ->setAttrib('id', 'var_vm_cpus')
+                    ->setAttrib('required', 'required')
+                    ->removeDecorator('DtDdWrapper')
+                    ->removeDecorator('Label')
+                    ->removeDecorator('HtmlTag');
+            $var_vm_cpus->addMultiOption('', 'Selecione uma quantidade de vCPUs');
+            $var_vm_cpus->addMultiOption('2', '2');
+            $var_vm_cpus->addMultiOption('3', '3');
+            $var_vm_cpus->addMultiOption('4', '4');
+            $var_vm_cpus->addMultiOption('5', '5');
+            $var_vm_cpus->addMultiOption('6', '6');
+            $var_vm_cpus->addMultiOption('7', '7');
+            $var_vm_cpus->addMultiOption('8', '8');
+
+            $var_vm_memory_mb = new Zend_Form_Element_Select('var_vm_memory_mb');
+            $var_vm_memory_mb->setRequired(true)
+                    ->addValidator('NotEmpty')
+                    ->setAttrib('class', 'custom-select d-block w-100')
+                    ->setAttrib('id', 'var_vm_cpus')
+                    ->setAttrib('required', 'required')
+                    ->removeDecorator('DtDdWrapper')
+                    ->removeDecorator('Label')
+                    ->removeDecorator('HtmlTag');
+            $var_vm_memory_mb->addMultiOption('', 'Selecione uma quantidade de memória');
+            $var_vm_memory_mb->addMultiOption('2048 ', '2 GB');
+            $var_vm_memory_mb->addMultiOption('3072 ', '3 GB');
+            $var_vm_memory_mb->addMultiOption('4096 ', '4 GB');
+            $var_vm_memory_mb->addMultiOption('5120 ', '5 GB');
+            $var_vm_memory_mb->addMultiOption('6144 ', '6 GB');
+            $var_vm_memory_mb->addMultiOption('7168 ', '7 GB');
+            $var_vm_memory_mb->addMultiOption('8192 ', '8 GB');
+            $var_vm_memory_mb->addMultiOption('9216 ', '9 GB');
+            $var_vm_memory_mb->addMultiOption('10240', '10 GB');
+            $var_vm_memory_mb->addMultiOption('11264', '11 GB');
+            $var_vm_memory_mb->addMultiOption('12288', '12 GB');
+
+
+
+            $descricao = new Zend_Form_Element_Textarea('descricao');
+            $descricao->setRequired(true)
+                    ->addValidator('NotEmpty')
+                    ->addValidator('StringLength', false, array(2, 255))
+                    ->setAttrib('class', 'form-control')
+                    ->setAttrib('maxlength', '255')
+                    ->setAttrib('rows', '4')
+                    ->setAttrib('placeholder', 'Insira o número da WO e a sigla do sistema.')
+                    ->setAttrib('required', 'required')
+                    ->setAttrib('id', 'descricao')
+                    ->removeDecorator('DtDdWrapper')
+                    ->removeDecorator('Label')
+                    ->removeDecorator('HtmlTag');
+
+//            $var_vcenter_username = new Zend_Form_Element_Text('var_vcenter_username');
+//            $var_vcenter_username->setRequired(true)
+//                    ->addValidator('NotEmpty')
+//                    ->setAttrib('class', 'form-control')
+//                    ->setAttrib('maxlength', '20')
+//                    ->setAttrib('required', 'required')
+//                    ->setAttrib('id', 'var_vcenter_username')
+//                    ->removeDecorator('DtDdWrapper')
+//                    ->removeDecorator('Label')
+//                    ->removeDecorator('HtmlTag');
+//            
+//            $var_vcenter_password = new Zend_Form_Element_Password('var_vcenter_password');
+//            $var_vcenter_password->setRequired(true)
+//                    ->addValidator('NotEmpty')
+//                    ->setAttrib('class', 'form-control')
+//                    ->setAttrib('maxlength', '40')
+//                    ->setAttrib('required', 'required')
+//                    ->setAttrib('id', 'var_vcenter_password')
+//                    ->removeDecorator('DtDdWrapper')
+//                    ->removeDecorator('Label')
+//                    ->removeDecorator('HtmlTag');
+//            $this->addElements(array($site, $vertical, $ambiente, $rede, $var_vm_cpus, $var_vm_memory_mb, $descricao,$unidade,$categoria,$var_vcenter_username,$var_vcenter_password));
+            $this->addElements(array($site, $vertical, $ambiente, $rede, $var_vm_cpus, $var_vm_memory_mb, $descricao, $unidade, $categoria,));
+        } else if ($options['type'] == 'del') {
+            
+        }
+    }
+
+    public function preparaValidacaoElementosDinamicos($data) {
+
+
+        if ($this->getElement('site')->isValid($data['site'])) {
+
+            $this->populaVertical($data['site']);
+            if ($this->getElement('vertical')->isValid($data['vertical'])) {
+
+                $this->populaAmbiente($data['site'], $data['vertical']);
+                if ($this->getElement('ambiente')->isValid($data['ambiente'])) {
+
+                    $this->populaRede($data['site'], $data['vertical'], $data['ambiente']);
+                    if ($this->getElement('rede')->isValid($data['rede'])) {
+                        
+                    } else {
+                        return;
+                    }
+                } else {
+                    return;
+                }
+            } else {
+                return;
+            }
+        } else {
+            return;
+        }
+
+        if ($this->getElement('unidade')->isValid($data['unidade'])) {
+
+            $this->populaCategoria($data['unidade']);
+            if ($this->getElement('categoria')->isValid($data['categoria'])) {
+                
+            } else {
+                return;
+            }
+        } else {
+            return;
+        }
+
+//       Zend_Debug::dump($data);
+//       exit;
+    }
+
+    public function populaVertical($site) {
+        try {
+            $vertical_element = $this->getElement('vertical');
+            $rede = new RedeDAO();
+            $verticais = $rede->getVerticais($site);
+//                Zend_Debug::dump($verticais);
+//                exit;
+            foreach ($verticais['Vertical'] as $vertical) {
+                $vertical_element->addMultiOption($vertical['entry'], $vertical['entry']);
+            }
+        } catch (Exception $exc) {
+            return;
+        }
+    }
+
+    public function populaAmbiente($site, $vertical) {
+        try {
+            $ambiente_element = $this->getElement('ambiente');
+            $rede = new RedeDAO();
+            $verticais = $rede->getAmbientes($site, $vertical);
+//                Zend_Debug::dump($verticais);
+//                exit;
+            foreach ($verticais['Ambiente'] as $ambiente) {
+                $ambiente_element->addMultiOption($ambiente['entry'], $ambiente['entry']);
+            }
+        } catch (Exception $exc) {
+            return;
+        }
+    }
+
+    public function populaRede($site, $vertical, $ambiente) {
+        try {
+            $rede_element = $this->getElement('rede');
+            $rede = new RedeDAO();
+            $redes = $rede->getRedes($site, $vertical, $ambiente);
+//                Zend_Debug::dump($redes);
+//                exit;
+            foreach ($redes['Rede'] as $rede) {
+                $rede_element->addMultiOption(Zend_Json::encode($rede), $rede['red'] . ' - ' . $rede['descr']);
+            }
+        } catch (Exception $exc) {
+            return;
+        }
+    }
+
+    public function populaCategoria($unidade) {
+        try {
+            $categoria_element = $this->getElement('categoria');
+            $rede = new RedeDAO();
+            $categorias = $rede->getCategorias($unidade);
+            foreach ($categorias['Categoria'] as $categoria) {
+                $categoria_element->addMultiOption($categoria, $categoria);
+            }
+        } catch (Exception $exc) {
+            return;
+        }
+    }
+
+}
