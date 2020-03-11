@@ -1,0 +1,51 @@
+<?php
+
+class AuthController extends Zend_Controller_Action {
+
+//    public function authAction() {
+//
+//        $this->_helper->layout->disableLayout();
+//        $this->getResponse()->setHeader('WWW-Authenticate', 'Basic realm="Bem vindo.');
+//        //Estabelece o código de resposta 401 caso o usuário selecione o botão cancelar
+//        $this->getResponse()->setHttpResponseCode(401);
+//    }
+
+    public function authAction() {
+
+//        $this->_helper->layout->disableLayout();
+//        $this->getResponse()->setHeader('WWW-Authenticate', 'Basic realm="Bem vindo.');
+        //Estabelece o código de resposta 401 caso o usuário selecione o botão cancelar
+//        $this->getResponse()->setHttpResponseCode(401);
+        $this->_helper->layout->setLayout('login');
+        if ($this->getRequest()->isPost()) {
+            $data = $this->getRequest()->getPost();
+            $auth = Zend_Auth::getInstance();
+            $autenticate = new Extra_Auth_Adapter_Ldap($data['user'], $data['pass']);
+            $result = $auth->authenticate($autenticate);
+            if (!$result->isValid()) {
+                $this->view->msg_error = 'Nome de Usuário ou Senha está Incorreto.';
+            } else {
+                $this->_redirect('index');
+            }
+        }
+    }
+
+    public function authorizeAction() {
+        $this->_redirect('index');
+    }
+
+    public function logoutAction() {
+        $auth = Zend_Auth::getInstance();
+        $auth->clearIdentity();
+        Zend_Session::destroy();
+        $this->_helper->redirector('index');
+    }
+
+    public function unauthorizedAction() {
+
+        $this->_helper->layout->disableLayout();
+        $this->getResponse()->setHttpResponseCode(401);
+        $this->render('index');
+    }
+
+}
