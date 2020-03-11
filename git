@@ -1,0 +1,17 @@
+<?php
+
+class GitController extends Zend_Controller_Action {
+
+    public function updateAction() {
+        $this->_helper->viewRenderer->setNoRender(true);
+        $this->_helper->layout->disableLayout();
+
+        $servidor = shell_exec('hostname');
+        echo "Servidor:($servidor)</br>";
+        echo 'Atualizando o Projeto (git fetch e git reset):</br>';
+        $cmd_fetch_reset = "cd /opt/rh/httpd24/root/var/www/html/infrasimples && git fetch && git reset --hard origin/master 2>&1";
+        $exec_return_fetch_reset = shell_exec($cmd_fetch_reset);
+        echo $exec_return_fetch_reset;
+    }
+
+}
