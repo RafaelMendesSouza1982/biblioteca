@@ -1,0 +1,1833 @@
+<?php
+
+/**
+ * Classe que realiza intera��es com dados para contratos
+ *
+ */
+class UtilDAO extends Extra_Model_DAO {
+
+//private $recurso = 3;
+    public static function build() {
+        return new self();
+    }
+
+    public function obterSistemas($sistema) {
+        Zend_Loader::loadClass('Sistema');
+
+        $tabela = new Sistema();
+        $select = $tabela->select()->where("co_tb_sistema = $sistema");
+        $sistemas = $tabela->fetchAll($select);
+
+        return $sistemas;
+    }
+
+//Sempre que uma nova fun��o - semaforo for criada, inserir o sistema na fun��o listarSistemaSemaforo
+    public function semaforo($sistema) {
+        Zend_Loader::loadClass('SemaforoDAO');
+        $semaforoDAO = new SemaforoDAO();
+        switch ($sistema) {
+            case '1': //SISPL
+                return $semaforoDAO->semaforoSispl();
+                break;
+            case '3': //SIBAR                
+                return $semaforoDAO->semaforoSibar();
+                break;
+            case '5': //SICLI
+                return $semaforoDAO->semaforoSicli();
+                break;
+            case '8': //SIRIC
+                return $semaforoDAO->semaforoSiric();
+                break;
+            case '9': //SIPES	
+                return $semaforoDAO->semaforoSipes();
+                break;
+            case '7': //SIMIC
+                return $semaforoDAO->semaforoSimic();
+                break;
+            case '14': //NSGD	
+                return $semaforoDAO->semaforoNsgd();
+                break;
+            case '28': //SIPEN
+                return $semaforoDAO->semaforoSipen();
+                break;
+            case '11': //SIOPI                
+                return $semaforoDAO->semaforoSiopi();
+                break;
+            case '12': //SISPB
+                return $semaforoDAO->semaforoSispb();
+                break;
+            case '13': //SISFIN
+                return $semaforoDAO->semaforoSisfin();
+                break;
+            case '22': //SIAPI
+                return $semaforoDAO->semaforoSiapi();
+                break; //		
+            case '23': //SIAPX
+                return $semaforoDAO->semaforoSiapx();
+                break;
+            case '24': //SIEMP
+                return $semaforoDAO->semaforoSiemp();
+                break;
+            case '25': //SIFES                
+                return $semaforoDAO->semaforoSifes();
+                break;
+            case '34': //SIPCS
+                return $semaforoDAO->semaforoSipcs();
+                break;
+//            case '38': //SIGRC
+//                return $semaforoDAO->semaforoSigrc();
+                break;
+            case '49': //ATENDIMENTO
+                return $semaforoDAO->semaforoAtendimento();
+                break;
+            case '50': //SIPLD
+                return $semaforoDAO->semaforoSipld();
+                break;
+            case '53': //IMAGEM
+                return $semaforoDAO->semaforoImagem();
+                break;
+
+            default :
+                $semaforo['mensagem'] = 'Em constru&ccedil;&atilde;o!';
+                $semaforo['semaforo'] = "white";
+                $semaforo['font'] = "color:#C4C4C4;";
+                return $semaforo;
+                break;
+        }
+    }
+
+//    public function sistemaSiavs($sistema) {
+//        Zend_Loader::loadClass('NotaQuadrante');
+//        $tabela = new NotaQuadrante();
+//        $data = $this->dataSql();
+//
+////        $sistemas1 = $this->listarSistemasSemaforoInicial();
+////        $sistemasAtivos['s'] = $this->listarSistemasNotaSiavs();
+////        $vAtivos = implode(',', $sistemasAtivos['s']);
+//
+//
+//        $select = $tabela->select()->where("co_sistema = $sistema")->where("dt_data_hora >= '" . $data . "'")->order('dt_data_hora DESC');
+//        $nota = $tabela->fetchRow($select);
+//
+//        if ($nota) {
+//            if ($nota['nu_media'] < 7) {
+//                $resposta['back'] = '#FF6666';
+//                $resposta['nota'] = $nota['nu_media'];
+//                $resposta['qtd'] = $nota['nu_qtd_aval'];
+//            } elseif ($nota['nu_media'] >= 7 && $nota['nu_media'] < 8) {
+//                $resposta['back'] = '#FFFF99';
+//                $resposta['nota'] = $nota['nu_media'];
+//                $resposta['qtd'] = $nota['nu_qtd_aval'];
+//            } elseif ($nota['nu_media'] >= 8) {
+//                $resposta['back'] = '#93DB70';
+//                $resposta['nota'] = $nota['nu_media'];
+//                $resposta['qtd'] = $nota['nu_qtd_aval'];
+//            }
+//            return $resposta;
+//        }
+//    }
+
+    public function listarSistemasSemaforoInicial() {
+        $db = Zend_Db_Table_Abstract::getDefaultAdapter();
+
+        $sistemasAtivos = $this->listarSistemasAtivos();
+        $vAtivos = implode(',', $sistemasAtivos);
+
+//            CASE  
+//            WHEN no_sigla_sistema = 'SID01' THEN 'NSGD'
+//            WHEN no_sigla_sistema = 'SID02' THEN 'NSGD'
+//            WHEN no_sigla_sistema = 'SID03' THEN 'NSGD'
+//            WHEN no_sigla_sistema = 'SID05' THEN 'NSGD'
+//            WHEN no_sigla_sistema = 'SID06' THEN 'NSGD'
+//            WHEN no_sigla_sistema = 'SID49' THEN 'NSGD'
+//            WHEN no_sigla_sistema = 'SID52' THEN 'NSGD'
+//            WHEN no_sigla_sistema = 'SID53' THEN 'NSGD'
+//            ELSE no_sigla_sistema 
+//            END no_sigla_sistema,
+//		    no_grupo, co_tb_sistema, de_descricao 
+//            FROM pdb.pdbtb002_sistema pdbtb002
+//	   WHERE co_tb_sistema in($vAtivos) and no_grupo not in('4')  
+//            order by no_sigla_sistema asc";
+//
+//        $retorno = $db->query($query)->fetchAll();
+//
+//        foreach ($retorno as $key => $value) {
+//            if ($retorno[$key]['no_sigla_sistema'] == "NSGD" && $retorno[$key]['co_tb_sistema'] != "14") {
+//                unset($retorno[$key]);
+//            }
+//        }
+        $query = "SELECT distinct 
+
+                pestb001.co_tb_servico,
+                nm_servico, 
+                string_agg(no_sigla_sistema, '|') as no_sigla_sistema,
+                string_agg(pdbtb002.co_tb_sistema::text, '|') as co_tb_sistema,
+                string_agg(abas_ativas::text, '|') as abas_ativas
+
+                FROM 
+                pes.pestb001_servico  pestb001 
+                inner join pes.pestb002_servico_sistema pestb002
+                on pestb002.co_tb_servico = pestb001.co_tb_servico
+                inner join 
+                (
+                        select distinct pdbtb002.co_tb_sistema, 
+			    CASE  
+			    WHEN no_sigla_sistema = 'SID01' THEN 'NSGD'
+			    WHEN no_sigla_sistema = 'SID02' THEN 'NSGD'
+			    WHEN no_sigla_sistema = 'SID03' THEN 'NSGD'
+			    WHEN no_sigla_sistema = 'SID05' THEN 'NSGD'
+			    WHEN no_sigla_sistema = 'SID06' THEN 'NSGD'
+			    WHEN no_sigla_sistema = 'SID49' THEN 'NSGD'
+			    WHEN no_sigla_sistema = 'SID52' THEN 'NSGD'
+			    WHEN no_sigla_sistema = 'SID53' THEN 'NSGD'
+			    ELSE no_sigla_sistema 
+			    END no_sigla_sistema,
+			    coalesce(abas_ativas, 0) abas_ativas from 
+                        pdb.pdbtb002_sistema pdbtb002
+                        left join
+                        (
+                                select distinct co_sistema as abas_ativas from 
+                                perf.perftb002_aba perftb002
+                                inner join perf.perftb009_aba_sistema perftb009
+                                on  perftb002.co_aba = perftb009.co_aba
+                                and perftb002.co_tipo_aba = 5
+                        ) perftb009
+                        on co_tb_sistema = abas_ativas
+                        WHERE co_tb_sistema not in (15,16,18,17,19,4,20)
+                        ORDER BY no_sigla_sistema ASC
+                ) pdbtb002
+
+                on pdbtb002.co_tb_sistema = pestb002.co_tb_sistema
+                WHERE  pdbtb002.co_tb_sistema in($vAtivos) 
+                GROUP BY pestb001.co_tb_servico,nm_servico 
+                order by no_sigla_sistema asc";
+
+        $retorno = $db->query($query)->fetchAll();
+
+        return $retorno;
+    }
+
+    public function listarNotaSiavsMedia() {
+        $db = Zend_Db_Table_Abstract::getDefaultAdapter();
+        $data_atual = date("Y-m-d");
+        $query = "SELECT co_tb_sistema id_sistema, nu_media  media_ponderada,nu_qtd_aval somatoria_avaliacoes 
+                FROM 
+                pdb.pdbtb002_sistema pdbtb002
+                INNER JOIN pdb.pdbtb003_nota_quadrante pdbtb003
+                ON pdbtb002.co_tb_sistema = pdbtb003.co_sistema
+                INNER JOIN 
+                (
+                        SELECT co_sistema, MAX(dt_data_hora) data_max  
+                        FROM pdb.pdbtb003_nota_quadrante pdbtb003
+                        WHERE date_trunc('day',  dt_data_hora)  = date '$data_atual'
+                        GROUP BY co_sistema, date_trunc('day',  dt_data_hora)
+                ) SUB_MAX_1
+                ON SUB_MAX_1.co_sistema = pdbtb003.co_sistema
+                AND SUB_MAX_1.data_max = pdbtb003.dt_data_hora
+                WHERE date_trunc('day',  dt_data_hora)  = date '$data_atual'";
+        $resultados = $db->query($query)->fetchAll();
+
+        $retorno = array();
+
+        foreach ($resultados as $resultado) {
+            $indice = strtolower($resultado['id_sistema']);
+            if ($resultado['media_ponderada'] < 7) {
+                $retorno[$indice]['back'] = '#FF6666';
+                $retorno[$indice]['nota'] = $resultado['media_ponderada'];
+                $retorno[$indice]['qtd'] = $resultado['somatoria_avaliacoes'];
+            } elseif ($resultado['media_ponderada'] >= 7 && $resultado['media_ponderada'] < 8.28) {
+                $retorno[$indice]['back'] = '#FFFF99';
+                $retorno[$indice]['nota'] = $resultado['media_ponderada'];
+                $retorno[$indice]['qtd'] = $resultado['somatoria_avaliacoes'];
+            } elseif ($resultado['media_ponderada'] >= 8.28) {
+                $retorno[$indice]['back'] = '#93DB70';
+                $retorno[$indice]['nota'] = $resultado['media_ponderada'];
+                $retorno[$indice]['qtd'] = $resultado['somatoria_avaliacoes'];
+            }
+        }
+
+        return $retorno;
+    }
+
+    public function listarSistemas($module, $permissao = TRUE) {
+        Zend_Loader::loadClass('Sistema');
+        require_once APPLICATION_PATH . '/models/bo/Semaforo/Semaforo.php';
+
+        $ob_semaforo = new Bo_Semaforo_Semaforo();
+
+####### BUSCA TODOS SISTEMAS EXCETO OS NÃO ATIVOS #################
+        $sistemas1 = $this->listarSistemasSemaforoInicial();
+
+        $siavs = $this->listarNotaSiavsMedia();
+
+        $sistema_semaforo = $ob_semaforo->semaforo();
+
+        $resultado = array();
+
+        $i = 0;
+        foreach ($sistemas1 as $sistema1) {
+            if (isset($sistema_semaforo[$sistema1['co_tb_servico']])) {
+                $semaforo = $sistema_semaforo[$sistema1['co_tb_servico']];
+                $resultado[$i]['semaforo'] = $semaforo;
+            } else {
+                $tabela = new DadosSemaforoInicial();
+                $row = $tabela->fetchRow("co_tb_sistema = " . $sistema1['co_tb_servico']);
+                if (!is_null($row)) {
+                    $ultima_msg = $row->toArray();
+                    $semaforo = array();
+                    $semaforo['mensagem'] = $ultima_msg['mensagem'];
+                    $semaforo['semaforo'] = "#CDCDCD";
+                    $semaforo['font'] = "color:#C4C4C4;";
+                    $resultado[$i]['semaforo'] = $semaforo;
+                } else {
+                    $semaforo = array();
+                    $semaforo['mensagem'] = 'Em constru&ccedil;&atilde;o!';
+                    $semaforo['semaforo'] = "#CDCDCD";
+                    $semaforo['font'] = "color:#C4C4C4;";
+                    $resultado[$i]['semaforo'] = $semaforo;
+                }
+            }
+            $resultado[$i]['co_tb_servico'] = $sistema1['co_tb_servico'];
+            $resultado[$i]['co_tb_sistema'] = $sistema1['co_tb_sistema'];
+            $resultado[$i]['no_sigla_sistema'] = $sistema1['no_sigla_sistema'];
+            $resultado[$i]['descricao'] = $sistema1['nm_servico'];
+            if ($sistema1['co_tb_servico'] == 44) {
+                $siavs_code = 45;
+            } else {
+                $siavs_code = $sistema1['co_tb_servico'];
+            }
+            if (isset($siavs[$siavs_code])) {
+                $resultado[$i]['notasiavs'] = $siavs[$siavs_code];
+            }
+            $i++;
+        }
+
+        /**
+         * Tratamento de diferenciação dos módulos de GNS e de EVENTOS
+         */
+        $db = Zend_Db_Table_Abstract::getDefaultAdapter();
+        $tb_sistema = new Sistema();
+        $bind_module = array(':e' => $module);
+        $select_module = $tb_sistema->select()->where(" ds_module = UPPER(:e) ");
+        $dados_equipe = $db->fetchAll($select_module, $bind_module);
+        $sistemas_module = array();
+        foreach ($dados_equipe as $v) {
+            $sistemas_module[] = $v['co_tb_sistema'];
+        }
+        $aux_resultado_modulo = array();
+        foreach ($resultado as $semaforo) {
+            $co_tb_sistema = $semaforo['co_tb_sistema'];
+            $aux_resultado_modulo[$co_tb_sistema] = $semaforo;
+        }
+        foreach ($aux_resultado_modulo as $k => $v) {
+            if (!in_array($k, $sistemas_module)) {
+                unset($aux_resultado_modulo[$k]);
+            }
+        }
+        unset($resultado);
+        $resultado = array();
+        foreach ($aux_resultado_modulo as $v) {
+            $resultado[] = $v;
+        }
+
+
+        if ($permissao) {
+            /**
+             * Restrição de Acesso
+             */
+            $auth = Zend_Auth::getInstance();
+            $acl_adapter = new Extra_Acl_Adapter_Db($auth);
+            $session = new Zend_Session_Namespace('system');
+            $tab = $session->tab;
+            $aux_resultado = $resultado;
+            unset($resultado);
+            $resultado = array();
+            foreach ($aux_resultado as $ks => $semaforo) {
+                if (strstr($semaforo['co_tb_sistema'], '|')) {
+                    $codigos_sistemas = explode("|", $semaforo['co_tb_sistema']);
+                    $acessos = array();
+                    foreach ($codigos_sistemas as $co_sis) {
+                        $co_tb_sistema = $co_sis;
+                        if (!$acl_adapter->hasAccessTabSystem($tab, $co_tb_sistema)) {
+                            $acessos[] = 0;
+                        } else {
+                            $acessos[] = 1;
+                        }
+                    }
+                    $aux_resultado[$ks]['acessos'] = implode('|', $acessos);
+                    if (!in_array(1, $acessos)) {
+                        unset($aux_resultado[$ks]);
+                    }
+                } else {
+                    $co_tb_sistema = $semaforo['co_tb_sistema'];
+                    if (!$acl_adapter->hasAccessTabSystem($tab, $co_tb_sistema)) {
+                        unset($aux_resultado[$ks]);
+                    }
+                }
+            }
+            foreach ($aux_resultado as $v) {
+                $resultado[] = $v;
+            }
+        }
+
+        /**
+         * Filtro de preferencias
+         */
+        $auth = Zend_Auth::getInstance();
+        $matricula = strtoupper($auth->getInstance()->getIdentity());
+        $tb_pref = new Zend_Db_Table('perf.perftb022_pessoa_servico');
+        $query_pref = "  
+            SELECT perftb022.co_tb_servico
+            FROM 
+            pes.pestb001_servico pestb001 
+            inner join pes.pestb002_servico_sistema pestb002
+            on pestb002.co_tb_servico = pestb001.co_tb_servico
+            inner join pdb.pdbtb002_sistema pdbtb002
+            on pdbtb002.co_tb_sistema = pestb002.co_tb_sistema
+            inner join perf.perftb022_pessoa_servico perftb022
+            on pestb001.co_tb_servico = perftb022.co_tb_servico
+            where ds_module = :ds_module
+            and co_matricula = :co_matricula
+        ";
+        $d = $db->query($query_pref, array(':ds_module' => $module, ':co_matricula' => $matricula))->fetchAll();
+        if (!empty($d)) {
+            $pref_aux_resultado = $resultado;
+            $resultado = array();
+            $prefs = array();
+            foreach ($d as $pref_v) {
+                $prefs[] = $pref_v['co_tb_servico'];
+            }
+            foreach ($pref_aux_resultado as $resul_k => $resul_v) {
+                if (!in_array($resul_v['co_tb_servico'], $prefs)) {
+                    unset($pref_aux_resultado[$resul_k]);
+                }
+            }
+            foreach ($pref_aux_resultado as $v) {
+                $resultado[] = $v;
+            }
+        }
+
+        /**
+         * Ordenaçao em colunas
+         */
+        $retorno = array();
+        $count_semaforos = count($resultado);
+        $div = $count_semaforos / 3;
+        $div_floor = floor($div);
+
+        $mod = $count_semaforos % 3;
+        switch ($mod) {
+            case 0:
+                $first_column_qtd = $second_column_qtd = $third_column_qtd = $div_floor;
+                break;
+            case 1:
+                $first_column_qtd = $second_column_qtd = $third_column_qtd = $div_floor;
+                $first_column_qtd += 1;
+                break;
+            case 2:
+                $first_column_qtd = $second_column_qtd = $third_column_qtd = $div_floor;
+                $first_column_qtd += 1;
+                $second_column_qtd += 1;
+                break;
+            default:
+                break;
+        }
+        //Zend_Debug::dump($count_semaforos."|".$first_column_qtd."|".$second_column_qtd."|".$third_column_qtd);
+
+        $index_arr_semaforo = 0;
+        for ($index = 1; $index <= $first_column_qtd; $index++) {
+            $retorno[1][] = $resultado[$index_arr_semaforo];
+            $index_arr_semaforo++;
+        }
+        for ($index = 1; $index <= $second_column_qtd; $index++) {
+            $retorno[2][] = $resultado[$index_arr_semaforo];
+            $index_arr_semaforo++;
+        }
+        for ($index = 1; $index <= $third_column_qtd; $index++) {
+            $retorno[3][] = $resultado[$index_arr_semaforo];
+            $index_arr_semaforo++;
+        }
+        return $retorno;
+    }
+
+    /**
+     * Sistemas ativos na página inicial trabalha em conjuto com 
+     * listarSistemaSemaforosAtivos()
+     * @return array
+     */
+    public function listarSistemasAtivos() {
+
+        $array = array();
+        //$array['SIGEL'] = 2;
+        $array['SISPL'] = 1;
+        $array['SIBAR'] = 3;
+        $array['SICLI'] = 5;
+        $array['SIMIC'] = 7;
+        $array['SIRIC'] = 8;
+        $array['SIPES'] = 9;
+        $array['SIOPI'] = 11;
+        $array['SISPB'] = 12;
+        $array['SISFIN'] = 13;
+        $array['SID01'] = 14;
+        $array['SIAPI'] = 22;
+        $array['SIAPX'] = 23;
+        $array['SIEMP'] = 24;
+        $array['SIFES'] = 25;
+        $array['SIGCR'] = 26;
+        $array['SIPEN'] = 28;
+        $array['SIPCS'] = 34;
+        $array['SICQL'] = 35;
+        $array['SIGRC'] = 38;
+        $array['SIFEC'] = 40;
+        $array['SIGEC'] = 41;
+        $array['SIGAL'] = 42;
+        $array['SIINA'] = 44;
+        $array['SIOUV'] = 47;
+        //$array['SINCH'] = 48;
+        $array['ATENDIMENTO'] = 49;
+        $array['SIPLD'] = 50;
+        $array['SIPDC'] = 51;
+        $array['SIORM'] = 52;
+        $array['IMAGEM'] = 53;
+        $array['SIAOI'] = 54;
+        $array['SICVE'] = 55;
+        $array['SIRTA'] = 56;
+        $array['SIATD'] = 57;
+        $array['SIATC'] = 59;
+        $array['SILCE'] = 60;
+
+        return $array;
+    }
+
+// para habilitar o sistema na aba "N�vel de Servi�o" 
+    public function listarSistemasAtivos2() {
+
+        $array = array();
+        $array['siric'] = '8';
+        $array['sipes'] = '9';
+        $array['siemp'] = '24';
+        $array['sipen'] = '28';
+        $array['sispl'] = '1';
+        $array['siapx'] = '23';
+        $array['siapi'] = '22';
+        $array['sipcs'] = '34';
+        $array['siopi'] = '11';
+        $array['siopi'] = '41';
+        $array['siina'] = '44';
+        return $array;
+    }
+
+//Altera??o 25/03
+// para habilitar o sistema na aba "Negocio" 
+    public function listarSistemasAtivos3() {
+
+        $array = array();
+        $array['sispl'] = '1';
+        $array['siric'] = '8';
+        $array['sibar'] = '3';
+        $array['sicli'] = '5';
+        $array['simic'] = '7';
+        $array['sipes'] = '9';
+        $array['sispb'] = '12';
+        $array['siapi'] = '22';
+        $array['siapx'] = '23';
+        $array['siemp'] = '24';
+        $array['sifes'] = '25';
+        $array['sipen'] = '28';
+        $array['sispl'] = '1';
+        $array['siopi'] = '11';
+        $array['nsgd'] = '14';
+        $array['sipcs'] = '34';
+        $array['nsgd'] = '14';
+        $array['sispl'] = '1';
+        $array['sisfin'] = '13';
+        $array['sifec'] = '40';
+//        $array['sigrc'] = '38';
+        $array['siina'] = '44';
+        $array['atendimento'] = '49';
+        $array['sipld'] = '50';
+        $array['sipdc'] = '51';
+        $array['siorm'] = '52';
+        $array['imagem'] = '53';
+        $array['siatc'] = '59';
+//        $array['silce'] = '60';
+
+        return $array;
+    }
+
+// para habilitar o sistema na aba "TI"
+    public function listarSistemasAtivos4() {
+
+        $array = array();
+        $array['siric'] = '8';
+        $array['sibar'] = '3';
+        $array['sicli'] = '5';
+        $array['simic'] = '7';
+        $array['sipes'] = '9';
+        $array['sispb'] = '12';
+        $array['nsgd'] = '14';
+        $array['siapi'] = '22';
+        $array['siapx'] = '23';
+        $array['siemp'] = '24';
+        $array['sipen'] = '28';
+        $array['sipcs'] = '34';
+        $array['sisfin'] = '13';
+        $array['sispl'] = '1';
+        $array['siopi'] = '11';
+        $array['sigec'] = '41';
+        $array['sigcr'] = '26';
+//        $array['sigrc'] = '38';
+        $array['sifes'] = '25';
+        $array['siina'] = '44';
+        $array['atendimento'] = '49';
+        $array['sipld'] = '50';
+        $array['sipdc'] = '51';
+        $array['siorm'] = '52';
+        $array['imagem'] = '53';
+
+        return $array;
+    }
+
+// para habilitar o sistema na aba "Histórico"
+    public function listarSistemasAtivos6() {
+
+        $array = array();
+        $array['sispl'] = '1';
+        $array['sicli'] = '5';
+        $array['siric'] = '8';
+        $array['sipes'] = '9';
+        $array['siopi'] = '11';
+        $array['sisfin'] = '13';
+        $array['siapi'] = '22';
+        $array['siapx'] = '23';
+        $array['siemp'] = '24';
+        $array['sipen'] = '28';
+        $array['sipcs'] = '34';
+        $array['siouv'] = '47';
+        $array['sipdc'] = '51';
+        return $array;
+    }
+
+// para habilitar o sistema na aba "Consolidado"
+    public function listarSistemasAtivos7() {
+//        $array = array();
+//        $array['siric'] = '8';
+//        $array['sibar'] = '3';
+//        $array['sicli'] = '5';
+//        $array['simic'] = '7';
+//        $array['sipes'] = '9';
+//        $array['sispb'] = '12';
+//        $array['siapi'] = '22';
+//        $array['siapx'] = '23';
+//        $array['siemp'] = '24';
+//        $array['sifes'] = '25';
+//        $array['sipen'] = '28';
+//        $array['sispl'] = '1';
+//        $array['siopi'] = '11';
+////$array['nsgd'] = '14';
+//        $array['sipcs'] = '34';
+//        $array['sisfin'] = '13';
+//
+//        return $array;
+    }
+
+    public function listarSistemasAtivos8() {
+        $array = array();
+        $array['siapi'] = '22';
+//        $array['siapx'] = '23';        
+
+        return $array;
+    }
+
+//Fim altera??o 25/03
+// para definir a ordem de apresenta��o dos sistemas na tela principal 	
+    public function listarSistemaSemaforo() {
+
+
+        $array = array();
+        $array['simic'] = '7';
+        $array['sipen'] = '28';
+        $array['sipes'] = '9';
+        $array['sicli'] = '5';
+        $array['siapi'] = '22';
+        $array['siapx'] = '23';
+        $array['siemp'] = '24';
+        $array['sifec'] = '40';
+        $array['sifes'] = '25';
+        $array['siopi'] = '11';
+        $array['sisfin'] = '13';
+        $array['sispb'] = '12';
+//        $array['sigrc'] = '38';
+
+        return $array;
+    }
+
+    /**
+     * Lista de Semaforos Ativos
+     * @return array() lista semaforos ativos
+     */
+    public function listarSistemaSemaforosAtivos() {
+
+        $array = array();
+        $array['SISPL'] = 1;
+        $array['SICLI'] = 5;
+        $array['SIMIC'] = 7;
+        $array['SIRIC'] = 8;
+        $array['SIPES'] = 9;
+        $array['SIOPI'] = 11;
+        $array['SISPB'] = 12;
+        $array['SISFIN'] = 13;
+//        $array['SID01'] = 14;
+        $array['SIAPI'] = 22;
+        $array['SIAPX'] = 23;
+        $array['SIEMP'] = 24;
+        $array['SIFES'] = 25;
+        $array['SIGCR'] = 26;
+        $array['SIPEN'] = 28;
+        $array['SIPCS'] = 34;
+        $array['SICQL'] = 35;
+//        $array['SIGRC'] = 38;
+        $array['SIGEC'] = 41;
+        $array['SIGAL'] = 42;
+        $array['SIINA'] = 44;
+        $array['SIOUV'] = 47;
+        $array['ATENDIMENTO'] = 49;
+        $array['SIPLD'] = 50;
+        $array['SIPDC'] = 51;
+        $array['SIORM'] = 52;
+        $array['SICVE'] = 55;
+        $array['SIRTA'] = 56;
+        $array['IMAGEM'] = 53;
+        $array['SIATC'] = 59;
+        $array['SILCE'] = 60;
+        //$array['SIATD'] = 57;
+
+        return $array;
+    }
+
+    public function listarSistemasClean() {
+        Zend_Loader::loadClass('Sistema');
+
+        $tabela = new Sistema();
+        $sistemas = $tabela->fetchAll()->toArray();
+
+        return $sistemas;
+    }
+
+    public function listarSistemasSiglaId() {
+        Zend_Loader::loadClass('Sistema');
+
+        $tabela = new Sistema();
+        $select = $tabela->select('co_tb_sistema', 'no_sigla_sistema')->order('no_sigla_sistema');
+        $sistemas = $tabela->fetchAll($select);
+
+        $i = 0;
+        foreach ($sistemas as $sistema) {
+
+            $resultado[$i] = array();
+            $resultado[$i]['co_tb_sistema'] = $sistema['co_tb_sistema'];
+            $resultado[$i]['no_sigla_sistema'] = $sistema['no_sigla_sistema'];
+            $i++;
+        }
+        return $resultado;
+    }
+
+    public function listarNotasSiavs() {
+        $db = Zend_Registry::get("db");
+
+        $data = $this->dataMenos30Min();
+
+        $sql = "select s.no_sigla_sistema, n.nu_media from pdb.pdbtb003_nota_quadrante as n, pdb.pdbtb002_sistema as s
+			where n.co_sistema = s.co_tb_sistema
+                        and n.dt_data_hora > '" . $data . "'
+			order by n.nu_media DESC";
+
+        $res = $db->fetchAll($sql);
+        $i = 0;
+        foreach ($res as $uni) {
+            $resultado[$i]['nome'] = $uni['no_sigla_sistema'];
+            $resultado[$i]['media'] = $uni['nu_media'];
+            if ($uni['nu_media'] < 5) {
+                $resultado[$i]['back'] = '#FF6666';
+            } elseif ($uni['nu_media'] >= 5 && $uni['nu_media'] < 7) {
+                $resultado[$i]['back'] = '#FFCC66';
+            } elseif ($uni['nu_media'] >= 7 && $uni['nu_media'] < 8) {
+                $resultado[$i]['back'] = '#FFFF99';
+            } elseif ($uni['nu_media'] >= 8 && $uni['nu_media'] < 9) {
+                $resultado[$i]['back'] = '#66FF99';
+            } elseif ($uni['nu_media'] >= 9) {
+                $resultado[$i]['back'] = '#93DB70';
+            }
+            $i++;
+        }
+
+        $resultado[$i]['nome'] = "SIXYZ";
+        $resultado[$i]['media'] = 4.5;
+        $resultado[$i]['back'] = '#FF6666';
+
+        return $resultado;
+    }
+
+    public function buscaFeriados() {
+
+        $tabelaFeriado = new Feriados();
+
+        $colums = array("dt_feriado");
+
+        $select = $tabelaFeriado->select()->from("ico.icotbf01_feriado", $colums)->where("co_abrna_ggrfa_f03 = 'N' and dt_feriado >= '2012-01-01'");
+
+        return $tabelaFeriado->fetchAll($select)->toArray();
+    }
+
+    public function transformaDataTela($datasql) {
+
+        $data = DateTime::createFromFormat('Y-m-d', $datasql);
+        return $data->format('d/m/Y');
+//        $data = new Zend_Date($datasql, 'pt_BR');
+//        $dataTela = $data->toString('dd/MM/yyyy');
+//        return $dataTela;
+    }
+
+    public function transformaDataTela5($datasql) {
+        $data = DateTime::createFromFormat('d/m/Y', $datasql);
+        return $data->format('Y-m-d');
+    }
+
+    public function transformaDataTela6($datasql) {
+        $data = DateTime::createFromFormat('Y-m-d', $datasql);
+        return $data->format('d-m-Y');
+    }
+
+    public function transformaDataTela7($datasql) {
+        $data = new Zend_Date($datasql, 'pt_BR');
+        $dataTela = $data->toString('dd-MM-yyyy HH:mm:ss');
+        return $dataTela;
+    }
+
+    public function exibeDtHrSemSegundo($datasql) {
+        $data = new Zend_Date($datasql, 'pt_BR');
+        $dataTela = $data->toString('HH:mm');
+        return $dataTela;
+    }
+
+    public function transformarDataBr($datasql) {
+        $data = new Zend_Date($datasql, 'pt_BR');
+        $dataTela = $data->toString('dd/MM/yyyy');
+        return $dataTela;
+    }
+
+    public function transformarDataBr2($datasql) {
+        $data = new Zend_Date($datasql, 'pt_BR');
+        $dataTela = $data->toString('dd/MM/yyyy HH:mm:ss');
+        return $dataTela;
+    }
+
+    public function transformaMesAno($datasql) {
+        $data = new Zend_Date($datasql, 'pt_BR');
+        $dataTela = $data->toString('MM/yyyy');
+        return $dataTela;
+    }
+
+    public function transformaDataTela1($datasql) {
+        $data = DateTime::createFromFormat('Y/m/d H:i:s', substr($datasql, 0, 19));
+        return $data->format('Y-m-d H:i:s');
+    }
+
+    public function transformaDataTela2($datasql) {
+        $data = DateTime::createFromFormat('Y-m-d H:i:s', substr($datasql, 0, 19));
+        return $data->format('Y/m/d H:i:s');
+    }
+
+    public function transformaDataTela3($datasql) {
+        $data = new Zend_Date($datasql, 'pt_BR');
+        $dataTela = $data->toString('yyyy/MM/dd');
+        return $dataTela;
+    }
+
+    public function transformaDataTela4($datasql) {
+        $data = DateTime::createFromFormat('Y-m-d H:i:s', substr($datasql, 0, 19));
+        return $data->format('Y/m/d');
+    }
+
+    public function transformaDataHoraTela($datasql) {
+        $data = new Zend_Date($datasql, 'pt_BR');
+        $dataTela = $data->toString('dd/MM/yyyy HH:mm:ss');
+        return $dataTela;
+    }
+
+    public function transformaDataSql($datatela) {
+//        $data = DateTime::createFromFormat('d/m/Y', $datatela);
+//        return $data->format('Y-m-d');
+
+
+
+        $data = new Zend_Date($datatela, 'pt_BR');
+        $dataSql = $data->toString('yyyy-MM-dd');
+        return $dataSql;
+    }
+
+    public function transformaDataSql2($datatela) {
+        $data = new Zend_Date($datatela, 'pt_BR');
+        $dataSql = $data->toString('yyyy/MM/dd');
+        return $dataSql;
+    }
+
+    public function dataAtualSql() {
+        $dataAtual = new Zend_Date('pt_BR');
+        $data = $dataAtual->toString('yyyy-MM-dd HH:mm:ss');
+        return $data;
+    }
+
+    public function dataAtualTela() {
+        $dataAtual = new Zend_Date('pt_BR');
+        $data = $dataAtual->toString('dd/MM/yyyy HH:mm:ss');
+        return $data;
+    }
+
+    public function dataSql() {
+        $dataAtual = new Zend_Date('pt_BR');
+        $data = $dataAtual->toString('yyyy-MM-dd');
+        return $data;
+    }
+
+    public function dataSql2() {
+        $dataAtual = new Zend_Date('pt_BR');
+        $data = $dataAtual->toString('yyyy/MM/dd');
+        return $data;
+    }
+
+    public function dataSub12Meses($data) {
+        $dataAtual = new Zend_Date($data, 'pt_BR');
+        $date = $dataAtual->sub('12', Zend_Date::MONTH);
+        $data = $date->toString('yyyy-MM-dd');
+        return $data;
+    }
+
+    public function dataSub6Meses($data) {
+        $dataAtual = new Zend_Date($data, 'pt_BR');
+        $date = $dataAtual->sub('6', Zend_Date::MONTH);
+        $data = $date->toString('yyyy-MM-dd');
+        return $data;
+    }
+
+    public function dataSub3Meses($data) {
+        $dataAtual = new Zend_Date($data, 'pt_BR');
+        $date = $dataAtual->sub('3', Zend_Date::MONTH);
+        $data = $date->toString('yyyy-MM-dd');
+        return $data;
+    }
+
+    public function dataSub5Meses($data) {
+        $dataAtual = new Zend_Date($data, 'pt_BR');
+        $date = $dataAtual->sub('5', Zend_Date::MONTH);
+        $data = $date->toString('yyyy-MM-dd');
+        return $data;
+    }
+
+    public function datasubDia($data, $qtd) {
+        $dataAtual = new Zend_Date($data, 'pt_BR');
+        $date = $dataAtual->sub($qtd, Zend_Date::DAY);
+        $data = $date->toString('yyyy-MM-dd');
+        return $data;
+    }
+
+    public function dataaddDia($data, $qtd) {
+        $dataAtual = new Zend_Date($data, 'pt_BR');
+        $date = $dataAtual->add($qtd, Zend_Date::DAY);
+        $data = $date->toString('yyyy-MM-dd');
+        return $data;
+    }
+
+    public function dataSubMes($data) {
+        $dataAtual = new Zend_Date($data, 'pt_BR');
+        $date = $dataAtual->sub('1', Zend_Date::MONTH);
+        $data = $date->toString('MM/yyyy');
+        return $data;
+    }
+
+    public function dataAddMes($data) {
+        $dataAtual = new Zend_Date($data, 'pt_BR');
+        $date = $dataAtual->add('1', Zend_Date::MONTH);
+        $data = $date->toString('yyyy-MM-dd');
+        return $data;
+    }
+
+    public function dataHistorico() {
+        $dataAtual = new Zend_Date('pt_BR');
+        $date = $dataAtual->sub('1', Zend_Date::DAY);
+        $data = $date->toString('yyyy-MM-dd');
+        return $data;
+    }
+
+    public function dataSoma($data) {
+        $dataAtual = new Zend_Date($data, 'pt_BR');
+        $date = $dataAtual->add('1', Zend_Date::DAY);
+        $data = $date->toString('yyyy-MM-dd');
+        return $data;
+    }
+
+    public function dataMenos5Min() {
+        $dataAtual = new Zend_Date('pt_BR');
+        $date = $dataAtual->sub('10', Zend_Date::MINUTE);
+        $data = $date->toString('yyyy-MM-dd HH:mm:ss');
+        return $data;
+    }
+
+    public function dataMenosMin($data, $minutos) {
+        $dataAtual = new Zend_Date($data, 'pt_BR');
+        $date = $dataAtual->sub($minutos, Zend_Date::MINUTE);
+        $data = $date->toString('yyyy-MM-dd HH:mm:ss');
+        return $data;
+    }
+
+    public function dataMais5Min($dtHora) {
+        $datadia = new Zend_Date($dtHora, 'pt_BR');
+        $date = $datadia->add('5', Zend_Date::MINUTE);
+        $data = $date->toString('yyyy-MM-dd HH:mm:ss');
+        return $data;
+    }
+
+    public function dataMais10Min($dtHora) {
+        $datadia = new Zend_Date($dtHora, 'pt_BR');
+        $date = $datadia->add('10', Zend_Date::MINUTE);
+        $data = $date->toString('yyyy/MM/dd HH:mm:ss');
+        return $data;
+    }
+
+    public function dataMenos2Min() {
+        $dataAtual = new Zend_Date('pt_BR');
+        $date = $dataAtual->sub('4', Zend_Date::MINUTE);
+        $data = $date->toString('yyyy-MM-dd HH:mm:ss');
+        return $data;
+    }
+
+    public function dataMenos1Min() {
+        $dataAtual = new Zend_Date('pt_BR');
+        $date = $dataAtual->sub('2', Zend_Date::MINUTE);
+        $data = $date->toString('yyyy-MM-dd HH:mm:ss');
+        return $data;
+    }
+
+    public function dataMenos3Min() {
+        $dataAtual = new Zend_Date('pt_BR');
+        $date = $dataAtual->sub('3', Zend_Date::MINUTE);
+        $data = $date->toString('yyyy-MM-dd HH:mm:ss');
+        return $data;
+    }
+
+    public function subMinutosData($data, $minutos) {
+        $dataAtual = new Zend_Date($data);
+        $date = $dataAtual->sub($minutos, Zend_Date::MINUTE);
+        $data = $date->toString('yyyy-MM-dd HH:mm:ss');
+        return $data;
+    }
+
+    public function dataMenos15Min() {
+        $data = new DateTime();
+        $data->modify('- 30 minutes');
+        return $data->format('Y-m-d H:i:s');
+    }
+
+    public function dataMenos17Min() {
+        $dataAtual = new Zend_Date('pt_BR');
+        $date = $dataAtual->sub('19', Zend_Date::MINUTE);
+        $data = $date->toString('yyyy-MM-dd HH:mm:ss');
+        return $data;
+    }
+
+    public function dataMenos13Min() {
+        $dataAtual = new Zend_Date('pt_BR');
+        $date = $dataAtual->sub('15', Zend_Date::MINUTE);
+        $data = $date->toString('yyyy-MM-dd HH:mm:ss');
+        return $data;
+    }
+
+    public function data15Min() {
+        $data = new DateTime();
+        $data->modify('-15 minutes');
+        return $data->format('Y-m-d H:i:s');
+    }
+
+    public function data10Min() {
+        $data = new DateTime();
+        $data->modify('-13 minutes');
+        return $data->format('Y-m-d H:i:s');
+    }
+
+    public function data5Min() {
+        $data = new DateTime();
+        $data->modify('-5 minutes');
+        return $data->format('Y-m-d H:i:s');
+    }
+
+    public function datamenos6Min() {
+        $data = new DateTime();
+        $data->modify('-8 minutes');
+        return $data->format('Y-m-d H:i:s');
+    }
+
+    public function horaMenos($menos) {
+        $dataAtual = new Zend_Date('pt_BR');
+        $date = $dataAtual->sub($menos, Zend_Date::MINUTE);
+        $data = $date->toString('HH:mm:ss');
+        return $data;
+    }
+
+    public function datahoraMenos($menos) {
+        $dataAtual = new Zend_Date('pt_BR');
+        $date = $dataAtual->sub($menos, Zend_Date::MINUTE);
+        $data = $date->toString('yyyy-MM-dd HH:mm:ss');
+        return $data;
+    }
+
+    public function dataMenos20Min() {
+        $dataAtual = new Zend_Date('pt_BR');
+        $date = $dataAtual->sub('20', Zend_Date::MINUTE);
+        $data = $date->toString('yyyy-MM-dd HH:mm:ss');
+        return $data;
+    }
+
+    public function dataMenos10Min() {
+        $dataAtual = new Zend_Date('pt_BR');
+        $date = $dataAtual->sub('10', Zend_Date::MINUTE);
+        $data = $date->toString('yyyy-MM-dd HH:mm:ss');
+        return $data;
+    }
+
+    public function dataMenos1HoureMeia() {
+        $dataAtual = new Zend_Date('pt_BR');
+        $date = $dataAtual->sub('90', Zend_Date::MINUTE);
+        $data = $date->toString('yyyy-MM-dd HH:mm:ss');
+        return $data;
+    }
+
+    public function dataMenos1Hour() {
+        $dataAtual = new Zend_Date('pt_BR');
+        $date = $dataAtual->sub('60', Zend_Date::MINUTE);
+        $data = $date->toString('yyyy-MM-dd HH:mm:ss');
+        return $data;
+    }
+
+    public function dataMenos3Hours() {
+        $dataAtual = new Zend_Date('pt_BR');
+        $date = $dataAtual->add('180', Zend_Date::MINUTE);
+        $data = $date->toString('yyyy-MM-dd HH:mm:ss');
+        return $data;
+    }
+
+    public function dataMenos30Min() {
+        $dataAtual = new Zend_Date('pt_BR');
+        $date = $dataAtual->sub('30', Zend_Date::MINUTE);
+        $data = $date->toString('yyyy-MM-dd HH:mm:ss');
+        return $data;
+    }
+
+    public function dataMenos35Min() {
+        $dataAtual = new Zend_Date('pt_BR');
+        $date = $dataAtual->sub('35', Zend_Date::MINUTE);
+        $data = $date->toString('yyyy-MM-dd HH:mm:ss');
+        return $data;
+    }
+
+    public function dataMenos40Min() {
+        $dataAtual = new Zend_Date('pt_BR');
+        $date = $dataAtual->sub('40', Zend_Date::MINUTE);
+        $data = $date->toString('yyyy-MM-dd HH:mm:ss');
+        return $data;
+    }
+
+    public function dataMenos30Dias() {
+        $dataAtual = new Zend_Date('pt_BR');
+        $date = $dataAtual->sub('30', Zend_Date::DAY);
+        $data = $date->toString('yyyy-MM-dd');
+        return $data;
+    }
+
+    public function dataMenos40Dias() {
+        $dataAtual = new Zend_Date('pt_BR');
+        $date = $dataAtual->sub('40', Zend_Date::DAY);
+        $data = $date->toString('yyyy-MM-dd');
+        return $data;
+    }
+
+    public function dataMenos7Dias() {
+        $dataAtual = new Zend_Date('pt_BR');
+        $date = $dataAtual->sub('7', Zend_Date::DAY);
+        $data = $date->toString('yyyy-MM-dd');
+        return $data;
+    }
+    
+    public function dataMenos7Dias2() {
+        $session = new Zend_Session_Namespace('system');
+        $dataAtual = $this->transformaDataSql($session->data);
+        $date = date('Y-m-d', strtotime('-7 days', strtotime($dataAtual)));
+        return $date;
+    }
+    
+    public function dataMenos2Dias() {
+        $session = new Zend_Session_Namespace('system');
+        $dataAtual = $this->transformaDataSql($session->data);
+        $date = date('Y-m-d', strtotime('-2 days', strtotime($dataAtual)));
+        return $date;
+    }
+
+    public function dataMenos14Dias2() {
+        $session = new Zend_Session_Namespace('system');
+        $dataAtual = $this->transformaDataSql($session->data);
+        $date = date('Y-m-d', strtotime('-14 days', strtotime($dataAtual)));
+        return $date;
+    }
+
+    public function dataMenos1Dia() {
+        $dataAtual = new Zend_Date('pt_BR');
+        $date = $dataAtual->sub('1', Zend_Date::DAY);
+        $data = $date->toString('yyyy-MM-dd');
+        return $data;
+    }
+
+    public function dataMenos60Dias($data) {
+
+        $data = new DateTime();
+        $data->modify('- 60 days');
+        return $data->format('Y-m-d');
+
+//        $dataAtual = new Zend_Date('pt_BR');
+//        $date = $dataAtual->sub('60', Zend_Date::DAY);
+//        $data = $date->toString('yyyy-MM-dd');
+        return $data;
+    }
+
+    public function nomeMes($data) {
+        $dataAtual = new Zend_Date($data, 'pt_BR');
+        $data = $dataAtual->get(Zend_Date::MONTH_NAME);
+        return $data;
+    }
+
+    public function somaDia($datatela) {
+        $datadia = new Zend_Date($datatela, 'pt_BR');
+        $date = $datadia->add('1', Zend_Date::DAY);
+        $dataSql = $date->toString('yyyy-MM-dd');
+        return $dataSql;
+    }
+
+    public function subDia($datatela) {
+        $datadia = new Zend_Date($datatela, 'pt_BR');
+        $date = $datadia->sub('1', Zend_Date::DAY);
+        $dataSql = $date->toString('yyyy-MM-dd');
+        return $dataSql;
+    }
+
+    /**
+     * nomedia função para organizar os dados em dia 
+     */
+    public function nomeDia($datatela) {
+        $datadia = new Zend_Date($datatela, 'pt_BR');
+        $date = $datadia->sub('0', Zend_Date::DAY);
+        $dataSql = $date->toString('dd/MM/yyyy');
+        return $dataSql;
+    }
+
+    public function horaSql() {
+        $dataAtual = new Zend_Date('pt_BR');
+        $data = $dataAtual->toString('HH:mm:ss');
+        return $data;
+    }
+
+    /* Transforma data hora dd/MM/yyyy HH:mm:ss em  yyyy-MM-dd HH:mm:ss */
+
+    public function transformaDataHoraDB($datasql) {
+        $data = new Zend_Date($datasql, 'pt_BR');
+        $dataFormat = $data->toString('yyyy-MM-dd HH:mm:ss');
+        return $dataFormat;
+    }
+
+    function diffDate($d1, $d2, $type = '', $sep = '-') {
+        $d1 = explode($sep, $d1);
+        $d2 = explode($sep, $d2);
+        switch ($type) {
+            case 'A':
+                $X = 31536000;
+                break;
+            case 'M':
+                $X = 2592000;
+                break;
+            case 'D':
+                $X = 86400;
+                break;
+            case 'H':
+                $X = 3600;
+                break;
+            case 'MI':
+                $X = 60;
+                break;
+            default:
+                $X = 1;
+        }
+        return floor(((mktime(0, 0, 0, $d2[1], $d2[2], $d2[0]) - mktime(0, 0, 0, $d1[1], $d1[2], $d1[0])) / $X));
+    }
+
+    function trataDataGraficoSipes($session) {
+        $aux = explode('/', $session->mes);
+
+        if ((int) $aux[0] <= 9) {
+            $mes_ano = substr($session->mes, 1);
+        } else {
+            $mes_ano = $session->mes;
+        }
+
+        return $mes_ano;
+    }
+
+    public function dif_horario($horario1, $horario2) {
+
+        $hora_dif = substr($horario1, 0, 2);
+        $min_dif = substr($horario2, 3, 2);
+
+        $hora_calc = '32';
+        $min_calc = '00';
+
+        $teste = $hora_dif - $hora_calc;
+        $teste1 = $min_dif - $min_calc;
+
+        $calculo = $teste . ":" . $teste1;
+
+        return ($horario2 - $horario1) / 3600;
+    }
+
+    public function calculaDiffDataMinutos($data1, $data2) {
+
+        $data_inicio = new DateTime($data1);
+
+        $data_diferenca = new DateTime($data2);
+
+        $diferenca = $data_inicio->diff($data_diferenca);
+
+        $minutos = $diferenca->i;
+
+        $horas = $diferenca->h;
+
+        $total_minutos = $horas * 60 + $minutos;
+
+        return $total_minutos;
+    }
+
+    public function calcula_horas_minutos($hora) {
+        $resultado_em_horas = $hora;
+
+        $quebraHora = explode(":", $resultado_em_horas); //retorna um array onde cada elemento é separado por ":"
+
+        $minutos = $quebraHora[0];
+
+        $minutos = $minutos * 60;
+
+        $minutos = $minutos + $quebraHora[1];
+
+        return $minutos;
+    }
+
+    public function calcular_tempo_trasnc($hora1, $hora2) {
+
+        //Remove a data e guarda apenas a hora na variável no formato segundos
+        //$unix_data1 =  strtotime(substr($hora1, 11, 10));
+        //$unix_data2 =  strtotime(substr($hora2, 11, 10));
+        //Função $this->transformaDataHoraDB(), para sempre converter a
+        //data no formato de banco YYYY-MM-DD
+        //Porque a função strtotime não aceita outros formatos.
+        $conv_data1 = $this->transformaDataHoraDB($hora1);
+        $conv_data2 = $this->transformaDataHoraDB($hora2);
+
+        $unix_data1 = strtotime($conv_data1);
+        $unix_data2 = strtotime($conv_data2);
+
+
+        $total = $unix_data2 + $unix_data1;
+
+        $Segundos = $total % 60;
+
+        $nHoras = ($unix_data2 - $unix_data1) / 3600;
+        $nMinutos = (($unix_data2 - $unix_data1) % 3600) / 60;
+
+        $nSegundos = substr($Segundos, 1, 2);
+
+        //$retorno = sprintf('%02d:%02d', $nHoras, $nMinutos);
+        $retorno = sprintf('%02d:%02d:%02d', $nHoras, $nMinutos, $nSegundos);
+
+        return $retorno;
+    }
+
+    public function calcular_tempo_trasnc2($hora1, $hora2) {
+
+        //Remove a data e guarda apenas a hora na variável no formato segundos
+        //$unix_data1 =  strtotime(substr($hora1, 11, 10));
+        //$unix_data2 =  strtotime(substr($hora2, 11, 10));
+        //Função $this->transformaDataHoraDB(), para sempre converter a
+        //data no formato de banco YYYY-MM-DD
+        //Porque a função strtotime não aceita outros formatos.
+//        $conv_data1 = $this->transformaDataHoraDB($hora1);
+//        $conv_data2 = $this->transformaDataHoraDB($hora2);
+        $conv_data1 = $hora1;
+        $conv_data2 = $hora2;
+
+        $unix_data1 = strtotime($conv_data1);
+        $unix_data2 = strtotime($conv_data2);
+
+
+        $total = $unix_data2 + $unix_data1;
+
+        $Segundos = $total % 60;
+
+        $nHoras = ($unix_data2 - $unix_data1) / 3600;
+        $nMinutos = (($unix_data2 - $unix_data1) % 3600) / 60;
+
+        $nSegundos = substr($Segundos, 1, 2);
+
+        //$retorno = sprintf('%02d:%02d', $nHoras, $nMinutos);
+        $retorno = sprintf('%02d:%02d:%02d', $nHoras, $nMinutos, $nSegundos);
+
+        return $retorno;
+    }
+
+    /**
+     * Função responsável por calcular a diferença entre às duas datas horas
+     * @author Guilherme Rocha
+     * @param string $hora1 Y-m-d H:i:s
+     * @param String $hora2 Y-m-d H:i:s
+     * @return DateInterval
+     */
+    public function diff_tempo($hora1, $hora2) {
+        $hora_inicio = DateTime::createFromFormat('Y-m-d H:i:s', $hora1);
+        $hora_fim = DateTime::createFromFormat('Y-m-d H:i:s', $hora2);
+        return $hora_fim->diff($hora_inicio);
+    }
+
+    public function diff_tempo_timestamp($hora1, $hora2) {
+        $hora_inicio = DateTime::createFromFormat('Y-m-d H:i:s', $hora1);
+        $hora_fim = DateTime::createFromFormat('Y-m-d H:i:s', $hora2);
+        return $hora_fim->getTimeStamp() - $hora_inicio->getTimeStamp();
+    }
+
+    public function calcular_tempo_hora_minuto($hora1, $hora2) {
+
+        $conv_data1 = $this->transformaDataHoraDB($hora1);
+        $conv_data2 = $this->transformaDataHoraDB($hora2);
+
+        //$data1 = $hora1;
+        //$data2 = $hora2;
+
+        $unix_data1 = strtotime($conv_data1);
+        $unix_data2 = strtotime($conv_data2);
+
+        $total = $unix_data2 + $unix_data1;
+
+        $nHoras = ($unix_data2 - $unix_data1) / 3600;
+        $nMinutos = (($unix_data2 - $unix_data1) % 3600) / 60;
+        $Segundos = $total % 60;
+        $nSegundos = substr($Segundos, 1, 2);
+
+        return sprintf('%02d:%02d:%02d', $nHoras, $nMinutos, $nSegundos);
+    }
+
+    public function calculaDiffDataHoras($data1, $data2) {
+
+
+        $data_inicio = new DateTime($data1);
+
+        $data_diferenca = new DateTime($data2);
+
+        $diferenca = $data_inicio->diff($data_diferenca);
+
+        $horas = $diferenca->h;
+
+        return $horas;
+    }
+
+    public function converterMinutosHoras($mins) {
+// Se os minutos estiverem negativos
+        if ($mins < 0)
+            $min = abs($mins);
+        else
+            $min = $mins;
+
+// Arredonda a hora
+        $h = floor($min / 60);
+        $m = ($min - ($h * 60)) / 100;
+        $horas = $h + $m;
+
+// Matemática da quinta série
+// Detalhe: Aqui também pode se usar o abs()
+        if ($mins < 0)
+            $horas *= -1;
+
+// Separa a hora dos minutos
+        $sep = explode('.', $horas);
+        $h = $sep[0];
+        if (empty($sep[1]))
+            $sep[1] = 00;
+
+        $m = $sep[1];
+
+// Aqui um pequeno artifício pra colocar um zero no final
+        if (strlen($m) < 2)
+            $m = $m . 0;
+
+        return sprintf('%02d:%02d', $h, $m);
+    }
+
+    public function converte_minuto_hora($minutos) {
+        $hora = floor($minutos / 60);
+        $resto = $minutos % 60;
+        return $hora . ':' . $resto;
+    }
+
+    function converte_segundos($total_segundos, $inicio = 'Y') {
+
+        /* Devido � varia��o de dias entre os meses (pode ter 28, 29, 30 ou 31), o c�lculo com diferen�as entre timestamps nunca poder� ser exato, a n�o ser que o c�lculo comece pelo n�mero de dias (ou horas, minutos, segundos). Para minimizar ao m�ximo essa diferen�a, eu criei esta constante para utilizar durante o c�lculo:
+         */
+        define('dias_por_mes', ((((365 * 3) + 366) / 4) / 12));
+
+        $comecou = false;
+
+        if ($inicio == 'Y') {
+            $array['anos'] = floor($total_segundos / (60 * 60 * 24 * dias_por_mes * 12));
+            $total_segundos = ($total_segundos % (60 * 60 * 24 * dias_por_mes * 12));
+            $comecou = true;
+        }
+        if (($inicio == 'm') || ($comecou == true)) {
+            $array['meses'] = floor($total_segundos / (60 * 60 * 24 * dias_por_mes ));
+            $total_segundos = ($total_segundos % (60 * 60 * 24 * dias_por_mes ));
+            $comecou = true;
+        }
+        if (($inicio == 'd') || ($comecou == true)) {
+            $array['dias'] = floor($total_segundos / (60 * 60 * 24));
+            $total_segundos = ($total_segundos % (60 * 60 * 24));
+            $comecou = true;
+        }
+        if (($inicio == 'H') || ($comecou == true)) {
+            $array['horas'] = floor($total_segundos / (60 * 60));
+            $total_segundos = ($total_segundos % (60 * 60));
+            $comecou = true;
+        }
+        if (($inicio == 'i') || ($comecou == true)) {
+            $array['minutos'] = floor($total_segundos / 60);
+            $total_segundos = ($total_segundos % 60);
+            $comecou = true;
+        }
+        $array['segundos'] = $total_segundos;
+
+        return $array;
+    }
+
+    public function verificaDiaSemana($data) {
+
+        $dia_semana = date("w", strtotime($data));
+
+        return $dia_semana;
+    }
+
+    public function retornaDiaSemana($data) {
+
+        $dia_semana = date("w", strtotime($data));
+
+        $retorno = "";
+
+        switch ($dia_semana) {
+
+            case 0 :
+                $retorno = "Domingo";
+                break;
+            case 1 :
+                $retorno = "Segunda";
+                break;
+            case 2 :
+                $retorno = "Terca";
+                break;
+            case 3 :
+                $retorno = "Quarta";
+                break;
+            case 4 :
+                $retorno = "Quinta";
+                break;
+            case 5 :
+                $retorno = "Sexta";
+                break;
+            case 6 :
+                $retorno = "Sabado";
+                break;
+        }
+        return $retorno;
+    }
+
+    public function retornaMes($nome_mes) {
+
+        $retorno = "";
+
+        switch ($nome_mes) {
+
+            case "Jan" :
+                $retorno = '01';
+                break;
+
+            case "Fev" :
+                $retorno = '02';
+                break;
+
+            case "Mar" :
+                $retorno = '03';
+                break;
+
+            case "Abr" :
+                $retorno = '04';
+                break;
+
+            case "Mai" :
+                $retorno = '05';
+                break;
+
+            case "Jun" :
+                $retorno = '06';
+                break;
+
+            case "Jul" :
+                $retorno = '07';
+                break;
+
+            case "Ago" :
+                $retorno = '08';
+                break;
+
+            case "Set" :
+                $retorno = '09';
+                break;
+
+            case "Out" :
+                $retorno = '10';
+                break;
+
+            case "Nov" :
+                $retorno = '11';
+                break;
+
+            case "Dez" :
+                $retorno = '12';
+                break;
+        }
+        return $retorno;
+    }
+
+    public function intervaloDatas($dataInicio, $dataFim, $intervalo) {
+
+        $inicio = new DateTime($dataInicio);
+
+        $fim = new DateTime($dataFim);
+
+        $intervalo = DateInterval::createFromDateString($intervalo . "day");
+
+        $periodo = new DatePeriod($inicio, $intervalo, $fim);
+
+        return $periodo;
+    }
+
+    public function transformaOdateData($odate) {
+        $ano = substr($odate, 0, 2);
+        $mes = substr($odate, 2, 2);
+        $dia = substr($odate, 4, 2);
+        return $dia . "/" . $mes . "/20" . $ano;
+    }
+
+    public function transformaHoraData($tempo) {
+        $tempo = str_pad($tempo, 6, 0, 0);
+        $hora = substr($tempo, 0, 2);
+        $minuto = substr($tempo, 2, 2);
+        $segundo = substr($tempo, 4, 2);
+        return $hora . ":" . $minuto . ":" . $segundo;
+    }
+
+    public function verificaFeriado($data) {
+        $db = Zend_Db_Table_Abstract::getDefaultAdapter();
+
+        $query = "select dt_feriado from ico.icotbf01_feriado
+where dt_feriado = '$data'";
+
+        $retorno = $db->fetchAll($query);
+
+        return $retorno;
+    }
+
+    public function verificaHoraSemaforo() {
+        $db = Zend_Db_Table_Abstract::getDefaultAdapter();
+
+        $query = "select dt_data_hora_inclusao from pdb.pdbtb269_semaforo_inicial
+order by dt_data_hora_inclusao desc limit 1";
+
+        $retorno = $db->fetchRow($query);
+
+        return $retorno;
+    }
+
+    /*
+     * Função responsavel por retornar a diferença entre data e hora em H:m:s
+     * 
+     */
+
+    public function diferenca_data_hora($data1, $data2) {
+        $data_inicio = new DateTime($data1);
+        $data_fim = new DateTime($data2);
+        $resultado = $data_inicio->diff($data_fim)->format('%H:%I:%S');
+        return $resultado;
+    }
+
+    public function diferenca_data_hora_negativa($data1, $data2) {
+        //Transformando data timeStamp
+        $resultado = array();
+        $dt_data1 = Datetime::createFromFormat('Y-m-d H:i:s', $data1)->getTimeStamp();
+        $dt_data2 = Datetime::createFromFormat('Y-m-d H:i:s', $data2)->getTimeStamp();
+        $data_inicio = new DateTime($data1);
+        $data_fim = new DateTime($data2);
+        $resultado['hora'] = $data_inicio->diff($data_fim)->format('%H:%I:%S');
+        $resultado['hora_positiva'] = $data_inicio->diff($data_fim)->format('%H:%I:%S');
+        if ($dt_data2 < $dt_data1) {
+            //Caso a hora seja negativa
+            $resultado['sinal'] = 1;
+            $resultado['hora'] = "-" . $resultado['hora'];
+            return $resultado;
+        } else {
+            $resultado['sinal'] = 0;
+            return $resultado;
+        }
+    }
+
+    public function calculo_horas($data1, $data2) {
+        $data_inicio = new Zend_date($data1);
+        $data_fim = new Zend_Date($data2);
+        $data_one = $data_inicio->toString();
+        $data_two = $data_fim->toString();
+
+        $resultado = $data_fim->subDate($data_inicio)->toString();
+    }
+
+    /*
+     * Função responsável por calcular as Horas     * 
+     */
+
+    public function calculoMediaHora($hora) {
+
+        //Iniciando hora com 00:00:00
+        $hora_soma = 0;
+        $minuto_soma = 0;
+        $segundo_soma = 0;
+        $media = count($hora);
+        foreach ($hora as $hr) {
+            $hora_partida = explode(":", $hr);
+            $horas = $hora_partida[0];
+            $minuto = $hora_partida[1];
+            $segundo = $hora_partida[2];
+
+            $hora_soma += $horas;
+            $minuto_soma += $minuto;
+            $segundo_soma += $segundo;
+        }
+        //Transormando em segundos
+        $minuto_soma += $hora_soma * 60;
+        $segundo_soma += $minuto_soma * 60;
+        $hora_soma = 0;
+        $minuto_soma = 0;
+
+        //Dividindo os segundos pela media
+        $segundos_media = $segundo_soma / $media;
+        if (!is_int($segundos_media)) {
+            $segundos_media = explode(".", $segundos_media);
+            $segundos_media = $segundos_media[0];
+        }
+        //Convertendo em horas, minutos e segundos
+        while ($segundos_media >= 60) {
+            $segundos_media -= 60;
+            $minuto_soma++;
+        }
+        while ($minuto_soma >= 60) {
+            $minuto_soma -= 60;
+            $hora_soma++;
+        }
+        if ($hora_soma < 10) {
+            $hora_soma = "0" . $hora_soma;
+        }
+        if ($minuto_soma < 10) {
+            $minuto_soma = "0" . $minuto_soma;
+        }
+        if ($segundos_media < 10) {
+            $segundos_media = "0" . $segundos_media;
+        }
+        $horaMedia = $hora_soma . ":" . $minuto_soma . ":" . $segundos_media;
+        return $horaMedia;
+    }
+
+    function dias_uteis($mes, $ano) {
+        $uteis = 0;
+// Obtém o número de dias no mês 
+// (http://php.net/manual/en/function.cal-days-in-month.php)
+        $dias_no_mes = $num = cal_days_in_month(CAL_GREGORIAN, $mes, $ano);
+
+
+//        $db = Zend_Db_Table_Abstract::getDefaultAdapter();
+//        $sql = "select dt_feriado from ico.icotbf01_feriado 
+//                where dt_feriado ='$data_atual'";
+//        $feriado = $db->fetchRow($sql);
+
+        for ($dia = 1; $dia <= $dias_no_mes; $dia++) {
+
+// Aqui você pode verifica se tem feriado
+// ----------------------------------------
+// Obtém o timestamp
+// (http://php.net/manual/pt_BR/function.mktime.php)
+            $timestamp = mktime(0, 0, 0, $mes, $dia, $ano);
+            $semana = date("N", $timestamp);
+
+
+
+            if ($semana < 6)
+                $uteis++;
+        }
+
+        return $uteis;
+    }
+
+    /**
+     * Função que calcula quantos sábados e domingos de certo mês e ano.
+     * O retorno da função é um array() contendo os valores.
+     *
+     * @int $mes O número do mês, sem o zero antes dos valores abaixo de 10.
+     * @int $ano O número do ano.
+     */
+    public function NUMSabDom($mes, $ano) {
+        $numDiasFev = (date('L', mktime(0, 0, 0, $mes, 1, $ano)) == '1') ? 29 : 28;
+        $numDiasMeses = array(1 => 31, 2 => $numDiasFev, 3 => 31, 4 => 30, 5 => 31, 6 => 30, 7 => 31, 8 => 31, 9 => 30, 10 => 31, 11 => 30, 12 => 31);
+        for ($i = date('N', mktime(0, 0, 0, $mes, 1, $ano)), $j = 0, $numSab = 0, $numDom = 0; $j < $numDiasMeses[$mes]; $j++, $i++) {
+            $i = ($i > 7) ? 1 : $i;
+            if ($i == '6') {
+                $numSab++;
+            } elseif ($i == '7') {
+                $numDom++;
+            }
+        }
+        return array('sab' => $numSab, 'dom' => $numDom, 'ano' => $ano, 'mes' => $mes);
+    }
+
+    /**
+     * 
+     * @param type $data_hora no formato 'Y-m-d H:i:s'
+     * @param type $multiplo_minuto multiplo que deseja o arredondamento
+     * @return type
+     */
+    public function arredonda_multiplo_minuto($data_hora, $multiplo_minuto, $tp_arredondamento = 'FLOOR') {
+        $date_time = Datetime::createFromFormat('Y-m-d H:i:s', $data_hora);
+        if ($tp_arredondamento == "FLOOR") {
+            $minutes = (int) (floor($date_time->format("i") / (float) $multiplo_minuto)) * $multiplo_minuto;
+        } elseif ($tp_arredondamento == "ROUND") {
+            $minutes = (int) (round($date_time->format("i") / (float) $multiplo_minuto, 0)) * $multiplo_minuto;
+        } elseif ($tp_arredondamento == "CEIL") {
+            $minutes = (int) (ceil($date_time->format("i") / (float) $multiplo_minuto, 0)) * $multiplo_minuto;
+        }
+        $date_time->setTime($date_time->format("H"), $minutes, 0);
+        return $date_time->format("Y-m-d H:i:s");
+    }
+
+}
