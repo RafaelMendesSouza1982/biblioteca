@@ -1,0 +1,118 @@
+<?php
+
+class IndexController extends Zend_Controller_Action {
+
+    public function init() {
+        $this->view->baseUrl = $this->_request->getBaseUrl();
+    }
+
+    function preDispatch() {
+        
+    }
+
+    public function indexAction() {
+
+        $auth = Zend_Auth::getInstance();
+        $autenticate = new Extra_Auth_Adapter_Ldap($auth->getInstance()->getIdentity(), null);
+        $info = $autenticate->getUserData();
+        $nome = $autenticate->getUserDataKey("cn");
+        $matricula = $autenticate->getUserDataKey("co-usuario");
+        $unidade = $autenticate->getUserDataKey("co-unidade");
+        $this->view->unidade = $unidade[0];
+        $db = Zend_Db_Table_Abstract::getDefaultAdapter();
+        $sql = "SELECT COUNT(status) FROM ifs.ifstb002_dados_ip
+        where status = 'USADO'";
+        $resultado = $db->query($sql)->fetchAll();
+
+        $this->view->usuario = $nome[0];
+        $this->view->matricula = $matricula[0];
+        $this->view->servidor = $resultado[0];
+        $this->_helper->layout->setLayout('inicial');
+    }
+
+    public function enviadoAction() {
+        $auth = Zend_Auth::getInstance();
+        $autenticate = new Extra_Auth_Adapter_Ldap($auth->getInstance()->getIdentity(), null);
+        $info = $autenticate->getUserData();
+        $nome = $autenticate->getUserDataKey("cn");
+        $matricula = $autenticate->getUserDataKey("co-usuario");
+
+
+
+
+        $this->view->usuario = $nome[0];
+        $this->view->matricula = $matricula[0];
+
+
+
+        $this->_helper->layout->setLayout('inicial');
+    }
+
+    public function gravasessaoAction() {
+//        $this->_helper->layout->disableLayout();
+//        $this->_helper->viewRenderer->setNoRender(true);
+//
+//        $util = new UtilDAO();
+//        $session = new Zend_Session_Namespace('system');
+//        $session->sistema = $this->_getParam('sistema');
+//        $session->servico = ServicoDAO::getServicoPorSistema($session->sistema);
+//        $session->module = SistemaDAO::getModuloEquipePorSistema($session->sistema);
+//
+//        $session->data = $util->transformaDataTela($util->dataSql());
+//        $session->data2 = $util->transformaDataTela($util->dataSql());
+//        $session->mes = $util->transformaMesAno($util->dataSql());
+//
+//        $abas = SistemaDAO::getAbasSistemaTela($session->sistema, 2, 5);
+//
+//        foreach ($abas as $aba) {
+//            if ($aba['status'] == 'active') {
+//                $this->_redirect($aba['no_controller']);
+//            }
+//        }
+//        $this->_redirect('auth/unauthorized');
+    }
+
+    public function emailAction() {
+
+//        //$headers .= "MIME-Version: 1.0\r\n"; 
+//
+//        $this->_helper->layout->disableLayout();
+//        $this->_helper->viewRenderer->setNoRender(true);
+//
+//        $headers = "correio.corp.caixa.gov.br";
+//
+//        $username = '';
+//        $password = '';
+//
+//
+//        $box = imap_open($headers, $username, $password);
+//
+//        return $box;
+    }
+
+    function popAction() {
+
+
+//        $imap_user = "";
+//        $imap_pass = "";
+//        $imap_server = "{correio.corp.caixa.gov.br/novalidate-cert/ssl}";
+//
+//        $mbox = imap_open("{$imap_server}INBOX", $imap_user, $imap_pass);
+//
+//        $sorted_mbox = imap_sort($mbox, SORTDATE, 0);
+//        $totalrows = imap_num_msg($mbox);
+//        print "$imap_server\n";
+//
+//        $startvalue = 0;
+//        while ($startvalue < $totalrows) {
+//
+//            $headers = imap_fetchheader($mbox, $sorted_mbox[$startvalue]);
+//            $subject = array();
+//            preg_match_all('/^Subject: (.*)/m', $headers, $subject);
+//            print $subject[1][0] . "\n";
+//
+//            $startvalue++;
+//        }
+    }
+
+}
