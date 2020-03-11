@@ -1,0 +1,338 @@
+<link rel="stylesheet" href="<?php echo EXT_PATH; ?>css/tooltipster.css" type="text/css" media="screen" /> 
+<script src="<?php echo EXT_PATH; ?>js/jquery.tooltipster.min.js" type="text/javascript"></script> 
+<script>
+    $(document).ready(function () {
+        $('.semaforo2_tooltip_js').tooltipster();
+    });
+</script>
+<hr class="mb-4">
+<style>
+    .alert-orange {
+        color: #cc6600;
+        background-color: #F0E68C;
+        border-color: #ffcc66;
+    }
+
+    .alert-orange hr {
+        border-top-color: #F0E68C;
+    }
+
+    .alert-orange .alert-link {
+        color: #533f03;
+    }
+</style>
+<script type="text/javascript">
+    $(document).ready(function () {
+        var var_cd_ifs = null;
+        var_cd_ifs = $('#var_cd_ifs').attr('value');
+        function statuslogBuild() {
+            jQuery.ajax({
+                url: "statuslog/var_cd_ifs/" + var_cd_ifs
+            }).done(function (html) {
+//                console.log(html);
+//                    console.log(html.status_vm);
+//                    console.log(html.id_vm);
+//                    console.log(html.message_error);
+//                console.log(html.status_vm);
+                if (html.status_vm != 'FAILED') {
+                    $('#caixa_status_log').removeClass("alert alert-warning");
+                    $('#caixa_status_log').addClass("alert alert-success");
+                    $('#caixa_status_log2').addClass(" spinner-border spinner-border-sm text-secondary");
+                    $('#caixa_status_log3').removeClass(" spinner-border spinner-border-sm");
+                    $('#caixa_status_log_out').addClass(" alert alert-orange caixa_logs_ips");
+                    $('#caixa_status_log_out2').addClass("glyphicon glyphicon-exclamation-sign");
+                    var msg_out = "";
+                    msg_out = "A partir de agora não feche seu browser.";
+                    $('#statusout').html(msg_out);
+                } else {
+                    $('#caixa_status_log').removeClass("alert alert-warning");
+                    $('#caixa_status_log').addClass("alert alert-danger");
+                    $('#caixa_status_log2').removeClass(" spinner-border spinner-border-sm text-secondary");
+                    $('#caixa_status_log3').removeClass(" spinner-border spinner-border-sm");
+                }
+
+                if (html.status_build == 'SUCCESS') {
+                    $('#caixa_status_log_ip').addClass("alert alert-info caixa_logs_ips");
+                    $('#caixa_status_log2').removeClass(" spinner-border spinner-border-sm text-secondary");
+                    $('#caixa_status_log_out').removeClass(" alert alert-info caixa_logs_ips");
+                    $('#caixa_status_log_out2').removeClass("glyphicon glyphicon-exclamation-sign");
+                    var msg_ip = "";
+                    msg_ip = "Seu servidor foi criado.</br>Seguem dados de acesso:</br>Hostname: " + html.hostname + "</br>Ip:" + html.ip_vm;
+                    $('#statusip').html(msg_ip);
+                }
+
+                var msg = "";
+                msg = "Status vm: " + html.status_vm;
+                if (typeof (html.id_vm) != 'undefined') {
+                    msg += " </br>Status script: " + html.id_vm;
+                }
+                if (typeof (html.message_error) != 'undefined') {
+                    msg += "</br>Mensagem de erro: " + html.message_error;
+                }
+                $('#statuslog').html(msg);
+            });
+            setTimeout(statuslogBuild, 10000);
+        }
+        statuslogBuild();
+    });
+</script>
+<style>
+    .posicao{
+        text-align: left;
+    }
+
+</style>
+<script>
+    function fecharJanela() {
+
+        window.opener = ’X’; window.open(”, ’_parent’, ”); window.close();
+    }
+</script>
+
+<script language="JavaScript">
+    function fechar() {
+        confirma = window.confirm("Deseja mesmo fechar a janela?");
+        if (confirma)
+            window.close();
+    }
+</script>
+
+<hr class="mb-4">
+<div class="conteudo">
+    <div class="container">
+        <div class="row">
+            <div class="col-md-4 order-md-4 mb-4">
+                <div class="titulo_etapas">Status</div>
+                <ul class="list-group mb-3" action="#" method="post"  novalidate>
+                    <?php
+                    if (isset($this->msg['erro'])) {
+                        $res_msg_erro = $this->msg['erro'];
+                    }
+                    if (isset($this->msg['sucesso'])) {
+                        $res_msg_sucesso = $this->msg['sucesso'];
+                    }
+                    if (isset($res_msg_sucesso)) {
+                        ?>  
+                        <li class="list-group-item d-flex justify-content-between lh-condensed space_status alert alert-success">
+                            <div>
+                                <span class="glyphicon glyphicon-ok"></span><span class="my-0 texto_status"><?php echo " " . $res_msg_sucesso; ?></span>
+                            </div>
+                        </li>
+                        <?php
+                    } else {
+                        ?>
+                        <li class="list-group-item d-flex justify-content-between lh-condensed space_status alert alert-danger">
+                            <div>
+                                <span class="glyphicon glyphicon-remove"></span><span class="my-0 texto_status"><?php echo " " . $res_msg_erro; ?></span>
+                            </div>
+                        </li>
+                        <?php
+                    }
+                    ?>
+                    <li id="caixa_status_log" class="list-group-item d-flex justify-content-between lh-condensed space_status">
+                        <div class="text text-success">
+                            <span id="caixa_status_log2" role="status" style="width: 1.5rem; height: 1.5rem;" aria-hidden="true"></span>
+                            <span id="caixa_status_log3" class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span>
+                            <span class="glyphicon glyphicon-hdd"></span>
+                            <span id="statuslog" class="my-0 texto_status"> Status atual</span>
+                        </div>
+                    </li>
+                    <li id="caixa_status_log_ip" class="list-group-item d-flex justify-content-between lh-condensed space_status">
+                        <div class="text text-success">
+                            <span class="glyphicon glyphicon-list"></span>
+                            <span id="statusip" class="my-0 texto_status"> Status do Servidor</span>
+                        </div>
+                    </li>
+                    <div class="titulo_etapas"></div>
+                    <li id="caixa_status_log_out" class="list-group-item d-flex justify-content-between lh-condensed space_status">
+                        <div class="texto_status_red">
+                            <span id="caixa_status_log_out2"></span>
+                            <span id="statusout" class="my-0 texto_status_red"></span>
+                        </div>
+                    </li>
+                </ul>
+                <div class="titulo_etapas"></div>
+            </div>
+            <div class="col-md-8 order-md-1 titulo_etapas2">
+                <?php
+                if (isset($this->msg_ip)) {
+                    ?>
+                    <p class="alert alert-danger caixa_ips"><?php echo $this->msg_ip; ?></p>
+                <?php } ?>
+                <div class="titulo_form"><span class="glyphicon glyphicon-file text_icons3"></span> DADOS DO SERVIDOR EM CRIAÇÃO</div>
+                <table class="table table-bordered table-striped">
+                    <tr>
+                        <td class="posicao">Site</td>
+                        <td class="posicao"><?php echo $this->alocaip_site; ?></td>
+                    </tr>
+                    <tr>
+                        <td class="posicao">Vertical</td>
+                        <td class="posicao"><?php echo $this->alocaip_vertical; ?></td>
+                    </tr>
+                    <tr>
+                        <td class="posicao">Ambiente</td>
+                        <td class="posicao"><?php echo $this->alocaip_ambiente; ?></td>
+                    </tr>
+                    <tr>
+                        <td class="posicao">Rede</td>
+                        <td class="posicao"><?php echo $this->alocaip_rede; ?></td>
+                    </tr>
+                    <tr>
+                        <td class="posicao">Categoria</td>
+                        <td class="posicao"><?php echo $this->alocaip_categoria; ?></td>
+                    </tr>
+                    <tr>
+                        <td class="posicao">Quantidade de vCPU</td>
+                        <td class="posicao"><?php echo $this->var_vm_cpus; ?></td>
+                    </tr>
+                    <tr>
+                        <td class="posicao">Quantidade de memória</td>
+                        <td class="posicao"><?php echo $this->var_vm_memory_mb; ?></td>
+                    </tr>
+                </table>
+                <form class="needs-validation" action="" method="post"  novalidate>
+                    <fieldset disabled>
+                        <div class="row">
+                            <!--                            <div class="col-md-6 mb-3">
+                                                            <label for="vcenter" class="alert alert-secondary">
+                                                                <span class="glyphicon glyphicon-info-sign text_form" title="Parametro para adicionar o usuário do Vcenter"></span>
+                                                                <span class="text_form1"> Hostname do vcenter</span>
+                                                            </label>
+                                                            <select class="custom-select d-block w-100" id="vcenter" name="var_vcenter_hostname">
+                                                                <option><?php echo $this->var_vcenter_hostname; ?></option>
+                                                            </select>
+                                                            <div class="invalid-feedback">
+                                                                Digite um Hostname do vcenter.
+                                                            </div>
+                                                        </div>-->
+                            <!--                            <div class="col-md-6 mb-3">
+                                                            <label for="lastName" class="alert alert-secondary">
+                                                                <span class="glyphicon glyphicon-info-sign text_form semaforo2_tooltip_js" title="Parametro para adicionar o usuário"></span>
+                                                                <span class="text_form1">  Usuário</span>
+                                                            </label>
+                                                            <input type="text" class="form-control" id="var_vcenter_username" value="<?php echo $this->var_vcenter_username; ?>" name="var_vcenter_username" placeholder="" maxlength="10">
+                                                            <div class="alert alert-danger invalid-feedback">
+                                                                Digite um Usuário.
+                                                            </div>
+                                                        </div>
+                                                         <div class="col-md-6 mb-3">
+                                                            <label for="lastName" class="alert alert-secondary"> 
+                                                                <span class="glyphicon glyphicon-info-sign text_form semaforo2_tooltip_js" title="Parametro para adicionar a senha do usuário"></span>
+                                                                <span class="text_form1">  Senha de usuário</span>
+                                                            </label>
+                                                            <input type="password" class="form-control" id="var_vcenter_password" value="<?php echo $this->var_vcenter_password; ?>" name="var_vcenter_password" placeholder="" maxlength="40">
+                                                            <div class="alert alert-danger invalid-feedback">
+                                                                Digite uma Senha de usuário.
+                                                            </div>
+                                                        </div>
+                                                    </div>
+                                                    <div class="row">
+                                                         <div class="col-md-6 mb-3">
+                                                            <label for="vcenter" class="alert alert-secondary">
+                                                                <span class="glyphicon glyphicon-info-sign text_form semaforo2_tooltip_js" title="Parametro para adicionar uma quantidade de vCPUs (opção de 2 vcpus até 8 vcpus.)"></span>
+                                                                <span class="text_form1"> Quantidade de vCPUs</span>
+                                                            </label>
+                                                            <select class="custom-select d-block w-100" id="var_vm_cpus" name="var_vm_cpus">
+                                                                <option value=""><?php echo $this->var_vm_cpus; ?></option>
+                                                            </select>
+                                                            <div class="alert alert-danger invalid-feedback">
+                                                                Escolha uma Quantidade de vCPUs.
+                                                            </div>
+                                                        </div>
+                                                         <div class="col-md-6 mb-3">
+                                                            <label for="vcenter" class="alert alert-secondary">
+                                                                <span class="glyphicon glyphicon-info-sign text_form semaforo2_tooltip_js" title="Parametro para adicionar uma quantidade de memória (opção de 2GB até 12GB)"></span>
+                                                                <span class="text_form1"> Quantidade de memória</span>
+                                                            </label>
+                                                            <select class="custom-select d-block w-100" id="var_vm_memory_mb" name="var_vm_memory_mb" required>
+                                                                <option value=""><?php echo $this->var_vm_memory_mb; ?></option>
+                                                               
+                                                            </select>
+                                                            <div class="alert alert-danger invalid-feedback">
+                                                                Escolha uma Quantidade de vCPUs.
+                                                            </div>
+                                                        </div>-->
+                            <!--                            <div class="col-md-6 mb-3">
+                                                            <label for="password" class="alert alert-secondary"> 
+                                                                <span class="glyphicon glyphicon-info-sign text_form" title="Parametro para adicionar a senha do usuário do Vcenter"></span>
+                                                                <span class="text_form1">  Senha de usuário do vcenter</span>
+                                                            </label>
+                                                            <input type="password" class="form-control" id="password" name="var_vcenter_password" placeholder="" maxlength="40" required>
+                                                            <div class="alert alert-danger invalid-feedback">
+                                                                Digite uma Senha de usuário do vcenter.
+                                                            </div>
+                                                        </div>-->
+                            <!--                            <div class="col-md-6 mb-3">
+                                                            
+                                                        </div>-->
+                        </div>
+                        <!--                        <div class="row">
+                                                    <div class="col-md-6 mb-3">
+                                                        <label for="lastName" class="alert alert-secondary"> 
+                                                            <span class="glyphicon glyphicon-info-sign text_form" title="Parametro para adicionar o IP da VM"></span>
+                                                            <span class="text_form1"> IP da VM</span>
+                                                        </label>
+                                                        <input type="text" class="form-control" id="var_vm_ip" value="<?php echo $this->var_vm_ip; ?>" name="var_vm_ip" placeholder="" maxlength="40">
+                                                        <div class="alert alert-danger invalid-feedback">
+                                                            Digite um IP da VM.
+                                                        </div>
+                                                    </div>
+                                                    <div class="col-md-6 mb-3">
+                                                        <label for="lastName" class="alert alert-secondary"> 
+                                                            <span class="glyphicon glyphicon-info-sign text_form" title="Parametro para adicionar uma máscara de rede da VM"></span>
+                                                            <span class="text_form1"> Máscara de Rede da VM</span>
+                                                        </label>
+                                                        <input type="text" class="form-control" id="var_vm_netmask" value="<?php echo $this->var_vm_netmask; ?>" name="var_vm_netmask" placeholder="" maxlength="40">
+                                                        <div class="alert alert-danger invalid-feedback">
+                                                            Digite uma Máscara de Rede da VM.
+                                                        </div>
+                                                    </div>
+                                                </div>-->
+                        <!--                        <div class="row">
+                                                    <div class="col-md-6 mb-3">
+                                                        <label for="lastName" class="alert alert-secondary"> 
+                                                            <span class="glyphicon glyphicon-info-sign text_form" title="Parametro para adicionar o Gateway de rede da VM"></span>
+                                                            <span class="text_form1"> Gateway de rede da VM</span>
+                                                        </label>
+                                                        <input type="text" class="form-control" id="var_vm_gateway" value="<?php echo $this->var_vm_gateway; ?>" name="var_vm_gateway" placeholder="" maxlength="40">
+                                                        <div class="alert alert-danger invalid-feedback">
+                                                            Digite um Gateway de rede da VM .
+                                                        </div>
+                                                    </div>
+                        
+                                                </div>-->
+                        <div class="mb-3">
+                            <label for="lastName" class="alert alert-secondary">
+                                <span class="glyphicon glyphicon-info-sign text_form" title="Parametro para descrição da funcionalidade da VM"></span>
+                                <span class="text_form1">Descrição da funcionalidade da VM</span>
+                            </label>
+                            <div class="input-group">
+                                <div class="input-group-prepend">
+                                </div>
+                                <textarea class="form-control" id="var_vm_annotation" name="var_vm_annotation" maxlength="255" rows="4"><?php echo $this->var_vm_annotation; ?></textarea>                            
+                                <div class="alert alert-danger invalid-feedback" style="width: 100%;">
+                                    Digite uma Descrição da funcionalidade da VM.
+                                </div>
+                            </div>
+                        </div>                
+                        <hr class="mb-4">
+                        <!--<button class="btn btn-primary boton_criar" type="submit"><span class="glyphicon glyphicon-cog"></span> CRIAR SERVIDOR</button>-->
+                        <input id="var_cd_ifs" type="hidden" value="<?php echo $this->var_cd_ifs; ?>"/>
+                    </fieldset>
+                </form>
+            </div>
+        </div>
+    </div>   
+</div> 
+<div class="container-fluid">
+    <footer id="rodape" id="overview">
+        <div class="container">
+            <span class="text3 text-muted">&copy; 2019 Caixa Econômica Federal</span>
+        </div>
+    </footer>
+</div>
+<!-- Bootstrap core JavaScript
+================================================== -->
+<!-- Placed at the end of the document so the pages load faster -->
+</body>
+</html>
