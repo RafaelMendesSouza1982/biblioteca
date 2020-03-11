@@ -1,0 +1,95 @@
+<link rel="stylesheet" href="<?php echo EXT_PATH; ?>css/tooltipster.css" type="text/css" media="screen" /> 
+<script src="<?php echo EXT_PATH; ?>js/jquery.tooltipster.min.js" type="text/javascript"></script> 
+<script>
+    $(document).ready(function () {
+        $('.semaforo2_tooltip_js').tooltipster();
+    });
+</script>
+<style>
+    .fonts_title{
+        font-size:10px;
+    }
+    .apre{
+        visibility: hidden;
+        display: none;
+    }
+    [botao]{
+        padding-bottom: 7px;
+        padding-top: 7px;
+    }
+    [fontes]{
+        font-size: 15px;
+        font-family: Arial, sans-serif;
+        margin-left: 4px;
+    }
+
+</style>
+<!--<style type="text/css" media="print">
+    @page { 
+        size: landscape;
+    }
+    body { 
+        writing-mode: tb-rl;
+    }
+</style>-->
+<hr class="mb-4">
+<div class="relatorio">
+    <button botao class="border-btn btn-outline-info btn-sm" onClick="window.print()"><span class="glyphicon glyphicon-print"><span fontes>Imprimir Relatório</span></span></button>
+    <a href="<?php echo $this->baseUrl(); ?>/atualizacao/inativar" botao class="border-btn btn-outline-primary btn-sm"><span class="glyphicon glyphicon-repeat"><span fontes>Novo Relatório</span></span></a>
+</div>
+<div class="container-fluids">
+    <div class="bs-docs-example">
+        <table class="table table-responsive" width="100%">                  
+            <thead class="alert alert-info fonts">
+                <tr><p class="fonts_titulo">RELATÓRIO GERADO:<?php echo " " . $this->usuario->getFullName(); ?><?php echo " - " . $this->datahora; ?></p></tr>
+            <tr bgcolor="CDCDCD" >                           
+                <td style="border: 1px solid #999999; font-size:14px; padding:10px 10px 10px 10px; width: 30px; text-align: center;">Sistema</td>
+                <td style="border: 1px solid #999999; font-size:14px; padding:10px 10px 10px 10px; width: 100px; text-align: center;">Status</td>
+                <td style="border: 1px solid #999999; font-size:14px; padding:10px 10px 10px 10px; width: 90px; text-align: center;">Data Hora</td>
+                <td style="border: 1px solid #999999; font-size:14px; padding:10px 10px 10px 10px; width: 140px; text-align: center;">Analista</td>
+                <td style="border: 1px solid #999999; font-size:14px; padding:10px 10px 10px 10px; width: 30px; text-align: center;">Ambiente</td>
+                <td style="border: 1px solid #999999; font-size:14px; padding:10px 10px 10px 10px; width: 30px; text-align: center;">Turno</td>
+                <td style="border: 1px solid #999999; font-size:14px; padding:10px 10px 10px 10px; width: 70px; text-align: center;">Rotina</td>
+                <td style="border: 1px solid #999999; font-size:14px; padding:10px 10px 10px 10px; width: 30px; text-align: center;">Ferramenta</td>
+                <td style="border: 1px solid #999999; font-size:14px; padding:10px 10px 10px 10px; width: 100px; text-align: center;">Tipo De Serviço</td>
+                <td style="border: 1px solid #999999; font-size:14px; padding:10px 10px 10px 10px; width: 80px; text-align: center;">Nº Ocorrência</td>
+                <td style="border: 1px solid #999999; font-size:14px; padding:10px 10px 10px 10px; width: 280px; text-align: center;">Observacao</td>
+            </tr> 
+            </thead> 
+            <tbody>
+                <?php
+                if (isset($this->listaAtualizacao)) {
+                    foreach ($this->listaAtualizacao as $geral) {
+                        $classe = $geral['multiplataforma'];
+                        $id_multiplataforma = $classe['id_cadastro'];
+                        $id = $classe['id_cadastro'];
+
+                        echo "<tr class='seleciona_tr' id='" . $classe['id_cadastro'] . "'>";
+                        echo "<td style='border: 1px solid #999999; font-size:12px; text-align: center;'>" . $classe['sistema'] . "</td>";
+                        echo "<td style='border: 1px solid #999999; font-size:11px; text-align: center;'>" . $classe['status_sistemas'] . "</td>";
+                        echo "<td style='border: 1px solid #999999; font-size:12px; text-align: center;'>" . date("d/m/Y H:i:s", strtotime($classe['data_hora_inclusao'])) . "</td>";
+                        echo "<td style='border: 1px solid #999999; font-size:11px; text-align: center;'>" . $classe['responsavel'] . "</td>";
+                        echo "<td style='border: 1px solid #999999; font-size:11px; text-align: center;'>" . $classe['ambiente'] . "</td>";
+                        echo "<td style='border: 1px solid #999999; font-size:11px; text-align: center;'>" . $classe['turno'] . "</td>";
+                        echo "<td style='border: 1px solid #999999; font-size:11px; text-align: center;'>" . $classe['rotina'] . "</td>";
+                        echo "<td style='border: 1px solid #999999; font-size:11px; text-align: center;'>" . $classe['ferramentas'] . "</td>";
+                        echo "<td style='border: 1px solid #999999; font-size:12px; text-align: center;'>" . $classe['tipo_servico'] . "</td>";
+                        echo "<td style='border: 1px solid #999999; font-size:12px; text-align: center;'>" . $classe['num_ocorrencia'] . "</td>";
+                        echo "<td style='border: 1px solid #999999; font-size:12px; text-align: justify;'>" . $classe['observacoes'] . "</td>";
+                        echo "</tr>";
+                    }
+                }
+                ?>
+            </tbody>
+        </table> 
+
+        <form id="form_relatorio" action="relatorio" >
+            <input type="hidden" name="incidentes" />
+        </form>
+    </div> 
+</div>
+<hr class="mb-4">
+<hr class="mb-4">
+
+
+
