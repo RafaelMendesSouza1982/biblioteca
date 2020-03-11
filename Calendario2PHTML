@@ -1,0 +1,229 @@
+<script type="text/javascript" src="<?php echo EXT_PATH . "js/historico_cip.js"; ?>"></script>
+<script>
+    $(document).ready(function () {
+        $('.tooltip').tooltipster();
+
+
+    });
+</script>
+<style>
+    table thead {
+        /*background-color: #fff;*/
+        font-weight: bold;
+        /*color: #555558;*/
+    }
+    .titulo01{
+        font-size: 18px;
+        font-family: sans-serif;
+        font-variant: initial;
+        font-synthesis: weight;
+    }
+    .titulo02{
+        font-size: 11px;       
+        font-family: sans-serif;
+        color: #666666;
+        font-variant: initial;
+
+    }
+    table td { 
+        width: 69px;
+        padding-bottom: 3px;
+        padding-top: 3px;
+        margin: 2px 2px 2px 2px;
+        border: 2px solid White;
+        border-radius: 7px;
+    }
+    table tbody td {
+        /*        background-color: #E6E6E6;*/
+        border: 2px solid White;
+
+        /*color: #555558;*/
+    }
+    table tr {
+        padding: 2px 2px 2px 2px; margin: 2px 2px 2px 2px;
+        border: 2px solid White;
+    }
+
+    .base_contanner{
+        height: 270px; 
+        padding: 10px;
+    }
+    .esp_contanner{
+        padding: 10px;
+    }
+
+</style>
+<div style="padding: 0px 0px 5px 10px">
+    <a href="<?php echo $this->baseUrl(); ?>/historico">Gráficos Histórico</a>
+</div>
+<div class="base_contanner">
+    <div class="graficoGrandeB boxShadow redondo10 esp_contanner">
+        <div id="relatorio2" class="graficoInternoNegocio" >
+            <table width="100%" class="dataTableSigec">
+                <thead>
+                    <tr>
+                        <th style="background-color:#fff;" colspan="31"><center><span class="titulo01">Transmissão de Arquivos a CIP - Prospecção</span><br>
+                    <span class="titulo02">por Data do Movimento</span></center><br></th>                           
+                </tr>                        
+                <tr>
+                    <th rowspan="2"></th>                                        
+                </tr>
+                <tr>              
+                    <?php
+                    $valores_mensais = $this->dados['mesInterface'];
+//                    Zend_Debug::dump($valores_mensais);
+//        exit();
+                    foreach ($valores_mensais as $k => $dados) {
+                        echo "<th style='text-align:center;'>" . "" . $k . "</th>";
+                    }
+                    ?>
+                </tr>    
+                </thead>
+                <tbody>
+                    <?php
+                    $util = new UtilDAO();
+                    $data_comparacao = date("Y-m-d");
+
+                    $sistemas_interfaces = array(
+                        'Consignado' => 'ProspConsignado',
+                        'Habitação' => 'ProspHabitacao',
+                        'Pessoal' => 'ProspPessoal',
+                        'Veículos' => 'ProspVeiculos',
+                        'Conta Salário' => 'ProspSalario'
+                    );
+                    $feriado = new Extra_Calendario_Feriado(date('Y-m-d', strtotime($this->mes_ano_dia . '-60day')), date('Y-m-d', strtotime($this->mes_ano_dia . '+60day')));
+                    foreach ($sistemas_interfaces as $SIGLA => $Sigla):
+                        ?>
+                        <tr>                        
+                            <td style="width: 100px;"><center><?php echo $SIGLA; ?></center></td>  
+                    <?php
+                    $odate_comp = array();
+                    foreach ($valores_mensais as $k => $array_ordenado_data) {
+                        if (isset($array_ordenado_data["odateProspHabitacao"])) {
+                            $odate_comp = $util->transformaDataSql($array_ordenado_data["odateProspHabitacao"]);
+                        } else if (isset($array_ordenado_data["odateProspSalario"])) {
+                            $odate_comp = $util->transformaDataSql($array_ordenado_data["odateProspSalario"]);
+                        } else if (isset($array_ordenado_data["odateResConsignado"])) {
+                            $odate_comp = $util->transformaDataSql($array_ordenado_data["odateResConsignado"]);
+                        } else if (isset($array_ordenado_data["odateResHabitacao"])) {
+                            $odate_comp = $util->transformaDataSql($array_ordenado_data["odateResHabitacao"]);
+                        } else if (isset($array_ordenado_data["odateResPessoal"])) {
+                            $odate_comp = $util->transformaDataSql($array_ordenado_data["odateResPessoal"]);
+                        } else if (isset($array_ordenado_data["odateResSalario"])) {
+                            $odate_comp = $util->transformaDataSql($array_ordenado_data["odateResSalario"]);
+                        }
+                    }
+                    $data_red = $odate_comp;
+
+                    foreach ($valores_mensais as $k => $array_ordenado) {
+                        $data = $this->mes_ano . "-" . str_pad((int) $k, 2, "0", STR_PAD_LEFT);
+                        $fim_de_semana = Extra_Util_Data::isFimDeSemana($data);
+                        $odate = @$array_ordenado["odate$Sigla"];
+                        if ($fim_de_semana == TRUE) {
+                            echo "<td style='background-color:#808080; width: 50px;'></td>";
+                        } else if ($feriado->isFeriado($data)) {
+                            echo "<td style='background-color:#808080; width: 50px;'></td>";
+                        } else if ($odate == '') {
+                            if (
+                                    (
+                                    ($Sigla == 'ProspConsignado') ||
+                                    ($Sigla == 'ProspSalario')
+                                    ) &&
+                                    ($data_red < $data_comparacao)) {
+                                ?>
+                                <td class="tooltip" title="<?php echo "Não recebimento de valor"; ?>" style='background-color:red; width: 50px;'></td>
+                                <?php
+                            } else {
+                                ?>
+                                <td class="tooltip" title="<?php echo "Não recebimento de valor"; ?>" style='background-color:#ccc; width: 50px;'></td>
+                                <?php
+                            }
+                        } else {
+                            ?>
+
+                            <td class="tooltip" title="<?php echo "Data / Horário de Transmissão: " . $array_ordenado["data$Sigla"] . "<br>" . $array_ordenado["msg$Sigla"]; ?>" style='background-color:<?php echo $array_ordenado["color$Sigla"]; ?>; font-size:8px;'></td>
+                            <?php
+                        }
+                    }
+                    ?>
+                    </tr>  
+                <?php endforeach; ?>
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+<div class="base_contanner">
+    <div class="graficoGrandeB boxShadow redondo10 esp_contanner">
+        <div id="relatorio2" class="graficoInternoNegocio" >
+            <table width="100%" class="dataTableSigec">
+                <thead>
+                    <tr>
+                        <th style="background-color:#fff;" colspan="31"><center><span class="titulo01">Transmissão de Arquivos a CIP - Resposta</span><br>
+                    <span class="titulo02">por Data do Movimento</span></center><br></th>                           
+                </tr>                        
+                <tr>
+                    <th rowspan="2"></th>                                        
+                </tr>
+                <tr>              
+                    <?php
+                    $valores_mensais = $this->dados['mesInterface'];
+                    foreach ($valores_mensais as $k => $dados) {
+                        echo "<th style='text-align:center;'>" . "" . $k . "</th>";
+                    }
+                    ?>
+                </tr>    
+                </thead>
+                <tbody>
+                    <?php
+                    $sistemas_interfaces = array(
+                        'Consignado' => 'ResConsignado',
+                        'Habitação' => 'ResHabitacao',
+                        'Pessoal' => 'ResPessoal',
+                        'Veículos' => 'ResVeiculos',
+                        'Conta Salário' => 'ResSalario'
+                    );
+                    $feriado = new Extra_Calendario_Feriado(date('Y-m-d', strtotime($this->mes_ano_dia . '-60day')), date('Y-m-d', strtotime($this->mes_ano_dia . '+60day')));
+                    foreach ($sistemas_interfaces as $SIGLA => $Sigla):
+                        ?>
+                        <tr>                        
+                            <td style="width: 100px;"><center><?php echo $SIGLA; ?></center></td>  
+                    <?php
+                    foreach ($valores_mensais as $k => $array_ordenado) {
+                        $data = $this->mes_ano . "-" . str_pad((int) $k, 2, "0", STR_PAD_LEFT);
+                        $fim_de_semana = Extra_Util_Data::isFimDeSemana($data);
+                        $odate = @$array_ordenado["odate$Sigla"];
+                        if ($fim_de_semana == TRUE) {
+                            echo "<td style='background-color:#808080; width: 50px;'></td>";
+                        } else if ($feriado->isFeriado($data)) {
+                            echo "<td style='background-color:#808080; width: 50px;'></td>";
+                        } else if ($odate == '') {
+                            if (
+                                    (
+                                    ($Sigla == 'ResConsignado') ||
+                                    ($Sigla == 'ResSalario')
+                                    ) &&
+                                    ($data_red < $data_comparacao)) {
+                                ?>
+                                <td class="tooltip" title="<?php echo "Não recebimento de valor"; ?>" style='background-color:red; width: 50px;'></td>
+                                <?php
+                            } else {
+                                ?>
+                                <td class="tooltip" title="<?php echo "Não recebimento de valor"; ?>" style='background-color:#ccc; width: 50px;'></td>
+                                <?php
+                            }
+                        } else {
+                            ?>
+
+                            <td class="tooltip" title="<?php echo "Data / Horário de Transmissão: " . $array_ordenado["data$Sigla"] . "<br>" . $array_ordenado["msg$Sigla"]; ?>" style='background-color:<?php echo $array_ordenado["color$Sigla"]; ?>; font-size:8px;'></td>
+                            <?php
+                        }
+                    }
+                    ?>
+                    </tr>  
+                <?php endforeach; ?>
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
