@@ -1,0 +1,169 @@
+<?php
+if (isset($this->dados)) {
+    foreach ($this->dados as $geral) {
+        $classe = $geral['historico'];
+
+        $id_cadastro = $classe['id_cadastro'];
+        $sistema = $classe['sistema'];
+        $status_sistemas = $classe['status_sistemas'];
+        $data_hora_inclusao = $classe['data_hora_inclusao'];
+        $data_inicio = substr($data_hora_inclusao, 0, 10);
+        $hora_inicio = substr($data_hora_inclusao, 11, 16);
+        $responsavel = $classe['responsavel'];
+        $ambiente = $classe['ambiente'];
+        $equipe = $classe['equipe'];
+        $turno = $classe['turno'];
+        $tipo_servico = $classe['tipo_servico'];
+        $num_ocorrencia = $classe['num_ocorrencia'];
+        $observacoes = $classe['observacoes'];
+        $odate = $classe['odate'];
+        $ferramentas = $classe['ferramentas'];
+        $rotina = $classe['rotina'];
+
+        $id = $classe['id'];
+    }
+}
+?>
+<style>
+    .caixa_atendimento{
+        border-bottom: 1px solid #cccccc;
+        padding: 10px 0px 10px 0px;
+    }
+    .caixa_atendimento_obs{
+        border-top: 1px solid #cccccc;
+        border-bottom: 1px solid #cccccc;
+        padding: 10px 0px 10px 0px;
+    }
+    .caixa_atendimento_tipo{
+        background-color: #f2dede;
+        color: #a94442;
+        border: 1px solid #ebccd1;
+        border-radius: 8px;
+        padding: 15px 0px 15px 10px;
+        font-size: 25px;
+        font-family: fantasy;
+        font-style: italic;
+        width: 97.2%;
+        margin-left: 10px;
+    }
+    .divider_modal{
+        font-size: 18px;
+        color: #333333;
+        font-family: fantasy;
+        font-style: italic;
+    }
+    .td_modal{
+        text-align:justify;
+        padding: 5px;
+    }
+    .titulo_geral{
+        background-color: #002884;
+        border: 1px solid #990000;
+        border-radius: 7px;
+        color: #fff;
+        padding: 10px 20px;
+        font-family: fantasy;
+    }
+    .titulo_historico{
+        color: #a94442;
+        background-color: #f2dede;
+        border: 1px solid #ebccd1;
+        border-radius: 7px;
+        padding: 10px 20px;
+        font-family: fantasy;
+        font-style: italic;
+    }
+    .titulo_modal{
+        background-color: #000066;
+        color: #fff;
+        padding: 20px;
+        font-size: 20px;
+        font-family: fantasy;
+        font-style: italic;            
+    }
+</style>
+<div id="infoInd">
+    <div style="padding: 0px 10px 0px 10px; margin-bottom: 20px; margin-top: 20px;">
+        <div style="border: 1px solid #cccccc; border-radius: 8px;">
+            <h3 class="alert alert-info">ATENDIMENTO INICIADO NO DIA <?php echo date("d/m/Y", strtotime($data_inicio)) . " AS " . $hora_inicio; ?></h3>
+            <p class="caixa_atendimento_tipo"><b>Tipo do Serviço:</b> <?php echo $tipo_servico; ?></p>
+            <div style="padding: 0px 20px 10px 20px;">
+                <p class="divider_modal caixa_atendimento"><b>Sistema:</b> <?php echo $sistema; ?></p>
+                <p class="divider_modal caixa_atendimento"><b>Número da Ocorrência</b> <?php echo $num_ocorrencia; ?></p>
+                <p class="divider_modal"><b>Status do Sistema</b> <?php echo $status_sistemas; ?></p>
+                <p class="divider_modal"><b>Ambiente</b> <?php echo $ambiente; ?></p>
+                <p class="divider_modal"><b>Equipe:</b> <?php echo $equipe; ?></p>
+                <p class="divider_modal"><b>Turno:</b> <?php echo $turno; ?></p>
+                <p class="divider_modal"><b>Analista Responsavel:</b> <?php echo $responsavel; ?></p>
+                <p class="divider_modal"><b>Ferramenta:</b> <?php echo $ferramentas; ?></p>
+                <p class="divider_modal"><b>Rotina:</b> <?php echo $rotina; ?></p>
+                <p class="divider_modal caixa_atendimento_obs"><b>Observações:</b> <?php echo $observacoes; ?></p>
+            </div>  
+        </div>  
+    </div>  
+    <?php
+    if (isset($id)) {
+        ?>
+        <div style="padding: 0px 10px 0px 10px; margin-bottom: 20px;">
+            <div style="border: 1px solid #cccccc; border-radius: 8px;">
+                <h3 class="titulo_historico">HISTÓRICO DE ATENDIMENTO</h3>
+                <div style="padding: 0px 10px 20px 10px;">
+                    <table class="ui-widget ui-widget-content table table-hover" width ="100%" id="users">
+                        <thead>
+                            <tr class="ui-widget-header" style="background-color: #d9edf7; color: #31708f; padding: 20px;">
+                                <td style="border: solid 1px #ccc; width:50px; text-align: center;">Status</td>
+                                <td style="border: solid 1px #ccc; width:50px; text-align: center;">Data Hora</td>
+                                <td style="border: solid 1px #ccc; width:50px; text-align: center;">Analista</td>
+                                <td style="border: solid 1px #ccc; width:50px; text-align: center;">Turnos</td>
+                                <td style="border: solid 1px #ccc; width:250px; text-align: center;">Observações</td>   
+                            </tr>
+                        </thead> 
+                        <?php
+                        if (isset($this->dados_hist)) {
+                            $resultados_hist = array();
+                            foreach ($this->dados_hist as $k => $res) {
+
+                                $classe = $res;
+                                $resultados_hist[$k]['id_hist'] = $res['id_hist'];
+
+                                $resultados_hist[$k]['id'] = $res['id'];
+                                $resultados_hist[$k]['data_hora'] = $res['data_hora'];
+                                $resultados_hist[$k]['status'] = $res['status'];
+                                $resultados_hist[$k]['analista'] = $res['analista'];
+                                $resultados_hist[$k]['turnos'] = $res['turnos'];
+                                $resultados_hist[$k]['obs'] = $res['obs'];
+
+                                $status = $resultados_hist[$k]['status'];
+                                $data_hora = $resultados_hist[$k]['data_hora'];
+                                $turnos = $resultados_hist[$k]['turnos'];
+                                $analista = $resultados_hist[$k]['analista'];
+                                $obs = $resultados_hist[$k]['obs'];
+                                $id = $resultados_hist[$k]['id'];
+                                ?>
+                                <tbody>
+                                    <tr>
+                                        <td class="td_modal"><?php echo $status; ?></td>
+                                        <td class="td_modal"><?php echo date("d/m/Y H:i:s", strtotime($data_hora)); ?></td>
+                                        <td class="td_modal"><?php echo $analista; ?></td>
+                                        <td class="td_modal"><?php echo $turnos; ?></td>
+                                        <td class="td_modal"><?php echo $obs; ?> </td>
+                                    </tr>
+                                </tbody>
+                                <?php
+                            }
+                        }
+                        ?>
+                    </table>
+                </div>
+            </div>
+        </div>
+        <?php
+    } else {
+        ?>
+        <span class="alert alert-secondary">
+            <span class="glyphicon glyphicon-wrench"></span>&nbsp;Sem alterações na Ocorrência!!
+        </span>
+        <?php
+    }
+    ?>
+</div>
