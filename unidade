@@ -1,0 +1,45 @@
+<?php
+
+/**
+ * Classe que realiza interações com dados para contratos
+ *
+ */
+class UnidadeDAO extends Extra_Model_DAO {
+
+    public static function getUnidades() {
+        $table = new Zend_Db_Table('perf.perftb003_unidade');
+        return $table->fetchAll(NULL, 'sg_unidade asc');
+    }
+
+    public static function isRegisteredUnidade($co_unidade) {
+
+        $table = new Zend_Db_Table('perf.perftb003_unidade');
+        $row = $table->fetchRow("co_unidade = $co_unidade");
+        if (!is_null($row)) {
+            return true;
+        }
+        return false;
+    }
+
+    public static function saveUnidade($table_data) {
+
+        $table = new Zend_Db_Table('perf.perftb003_unidade');
+        $row = $table->createRow($table_data);
+        $row->save();
+    }
+
+    public static function prepareLdapRegisterData($data) {
+
+        $table_data['co_unidade'] = $data['co-unidade'];
+        $table_data['sg_unidade'] = $data['sg-unidade'];
+
+        (!empty($data['no-unidade'])) ? ( $table_data['no_unidade'] = $data['no-unidade']) : ('');
+        (!empty($data['st'])) ? ( $table_data['sg_uf'] = $data['st']) : ('');
+        (!empty($data['nu-tp-unidade'])) ? ( $table_data['co_tipo_unidade_geral'] = $data['nu-tp-unidade']) : ('');
+        (!empty($data['no-lotacaofisica'])) ? ( $table_data['no_unidade_fisica'] = $data['no-lotacaofisica']) : ('');
+        (!empty($data['nu-unidade-sub'])) ? ( $table_data['co_sub_unidade'] = $data['nu-unidade-sub']) : ('');
+
+        return $table_data;
+    }
+
+}
