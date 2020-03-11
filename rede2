@@ -1,0 +1,73 @@
+<?php
+
+class RedeController extends Zend_Controller_Action {
+
+    public function init() {
+        if (!(strstr(__FILE__, 'C:') === FALSE)) {
+//            putenv("ALOCAIP=http://apialocaip.cetad.caixa");//pprodução
+            putenv("ALOCAIP=http://des.apialocaip.cetad.caixa");//desenvolvimento
+        }
+    }
+
+    function preDispatch() {
+        
+    }
+    
+    public function indexAction() {
+
+        $this->_helper->layout->disableLayout();
+        $this->_helper->viewRenderer->setNoRender(true);
+    }
+
+    public function sitesAction() {
+        $this->_helper->layout->disableLayout();
+        $rede = new RedeDAO();
+        $sites = $rede->getSites();
+        $this->view->sites = $sites;
+    }
+
+    public function unidadesAction() {
+        $this->_helper->layout->disableLayout();
+        $rede = new RedeDAO();
+        $unidades = $rede->getUnidades();
+        $this->view->unidades = $unidades;
+    }
+
+    public function verticaisAction() {
+        $this->_helper->layout->disableLayout();
+        $site = $this->getParam('site', null);
+        $rede = new RedeDAO();
+        $verticais = $rede->getVerticais($site);
+        $this->view->verticais = $verticais;
+    }
+
+    public function ambientesAction() {
+        $this->_helper->layout->disableLayout();
+        $site = $this->getParam('site', null);
+        $vertical = $this->getParam('vertical', null);
+        $rede = new RedeDAO();
+        $ambientes = $rede->getAmbientes($site, $vertical);
+        $this->view->ambientes = $ambientes;
+    }
+
+    public function categoriasAction() {
+        $this->_helper->layout->disableLayout();
+        $unidade = $this->getParam('unidade', null);
+        $rede = new RedeDAO();
+        $categorias = $rede->getCategorias($unidade);
+        $this->view->categorias = $categorias;
+    }
+
+    public function redesAction() {
+        $this->_helper->layout->disableLayout();
+        $site = $this->getParam('site', null);
+        $vertical = $this->getParam('vertical', null);
+        $ambiente = $this->getParam('ambiente', null);
+        $rede = new RedeDAO();
+        $redes = $rede->getRedes($site, $vertical, $ambiente);
+
+//        Zend_Debug::dump($redes);
+        $this->view->redes = $redes;
+    }
+
+}
