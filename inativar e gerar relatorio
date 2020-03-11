@@ -1,0 +1,393 @@
+<!--<link rel="stylesheet" href="<?php echo EXT_PATH; ?>css/tooltipster.css" type="text/css" media="screen" /> 
+<script src="<?php echo EXT_PATH; ?>js/jquery.tooltipster.min.js" type="text/javascript"></script> 
+<script>
+    $(document).ready(function () {
+        $('.semaforo3').tooltipster();
+    });
+</script>-->
+<script type="text/javascript">
+    $(function () {
+        console.log('teste');
+        $("#listamodal").dialog({
+            autoOpen: false,
+            modal: true,
+            width: 1200,
+            height: 600,
+            position: [180, 45],
+            show: {
+                effect: "drop",
+                duration: 700
+            },
+            hide: {
+                effect: "slide",
+                duration: 700
+            }
+        });
+        function acao() {
+            $(".acaoInd").click(function (event) {
+
+                event.preventDefault();
+                $("#listamodal").html("");
+                var id_cadastro = $(this).attr('id_cadastro');
+                $("#listamodal").dialog("open");
+                jQuery.get('./detalheindicador/id_cadastro/' + id_cadastro, null, function (tsv, state, xhr) {
+                    $("#listamodal").html(tsv);
+                });
+            });
+        }
+        acao();
+        $(".paginate_button ").click(function (event) {
+            acao();
+        });
+        $("select[name=example2_length]").click(function (event) {
+            acao();
+        });
+    });
+</script>
+
+<style>
+    .fonts_title{
+        font-size:10px;
+    }
+    .apre{
+        visibility: hidden;
+        display: none;
+    }
+    .titulo_modal{
+        background-color: #000066;
+        color: #fff;
+        padding: 20px;
+        font-size: 20px;
+        font-family: fantasy;
+        font-style: italic;  
+    }
+    .img_serv{
+        width: 50px;
+    }
+
+    .caixa-info{
+        width: 97.3%;
+        background-color: #fff;
+        padding-top: 20px;
+        border: 1px solid #e2e2e2;
+        border-top-right-radius: 8px;
+        border-top-left-radius: 8px;
+    }
+
+    .caixa-tootip{
+        min-width: 150px;
+        max-width: 300px;
+        padding: 20px 20px;
+        text-align: justify;
+    }
+
+    .text-title{
+        color: #0c5460;
+        font-size: 25px; 
+        margin-bottom: 20px;
+        float: left;
+    }
+    .contanner-title{
+        padding-left: 20px;
+        width: 100%;
+    }
+</style>
+
+<hr class="mb-4">
+<form id="form_relatorio" action="/multiplataforma/atualizacao/relatorios"  method="POST">
+    <div class="container-fluids">
+        <div class="relatorio">
+            <input id="gera_rel" type="submit" class="border-btn btn-outline-danger btn-sm" value="Gerar Relatório"/>
+        </div>
+        <div class="aba_email">
+            <span class="abas">OCORRÊNCIA BATCH</span>
+            <span class="abas2"><a href="<?php echo $this->baseUrl(); ?>/atualizacao/inativaronline" ><span class="text-abas">OCORRÊNCIA ONLINE</span></a></span>
+        </div>
+        <div class="bs-docs-example">
+            <table id="example2" class="display" width="100%">                  
+                <thead class="alert alert-info fonts">
+                    <tr><p class="fonts_titulo">HISTÓRICO DE INFORMAÇÕES (BATCH) <span><img class="img_serv" src="<?php echo EXT_PATH; ?>img/serv2.png"></span></p></tr>
+                <tr bgcolor="CDCDCD" >                           
+                    <td style="width: 1px;"></td>
+                    <td style="border-bottom: 1px solid #fff; font-size:12px; padding:10px 5px 10px 5px; width: 90px; text-align: center;">Sistema</td>
+                    <td style="border-bottom: 1px solid #fff; font-size:12px; padding:10px 5px 10px 5px; width: 50px; text-align: center;">Status</td>
+                    <td style="border-bottom: 1px solid #fff; font-size:12px; padding:10px 5px 10px 5px; width: 120px; text-align: center;">Data Hora</td>
+                    <td style="border-bottom: 1px solid #fff; font-size:12px; padding:10px 5px 10px 5px; width: 40px; text-align: center;">Analista</td>
+                    <td style="border-bottom: 1px solid #fff; font-size:12px; padding:10px 5px 10px 5px; width: 50px; text-align: center;">Ambiente</td>
+                    <td style="border-bottom: 1px solid #fff; font-size:12px; padding:10px 5px 10px 5px; width: 40px; text-align: center;">Turno</td>
+                    <td style="border-bottom: 1px solid #fff; font-size:12px; padding:10px 5px 10px 5px; width: 50px; text-align: center;">Rotina</td>
+                    <td style="border-bottom: 1px solid #fff; font-size:12px; padding:10px 5px 10px 5px; width: 120px; text-align: center;">Ferramenta</td>
+                    <td style="border-bottom: 1px solid #fff; font-size:12px; padding:10px 5px 10px 5px; width: 90px; text-align: center;">Tipo De Serviço</td>
+                    <td style="border-bottom: 1px solid #fff; font-size:12px; padding:10px 5px 10px 5px; width: 150px; text-align: center;">Nº Ocorreência</td>
+                    <td style="border-bottom: 1px solid #fff; font-size:12px; padding:10px 0px 10px 0px; width: 50px; text-align: center;">Observação</td>
+                    <td style="border-bottom: 1px solid #fff; font-size:12px; padding:10px 0px 10px 0px; width: 50px; text-align: center;">Visualizar</td>
+                    <td style="border-bottom: 1px solid #fff; font-size:12px; padding:10px 0px 10px 0px; width: 50px; text-align: center;">Atualizar</td>
+                    <td style="border-bottom: 1px solid #fff; font-size:12px; padding:10px 0px 10px 0px; width: 50px; text-align: center; ">Inativar</td>
+                </tr> 
+                </thead> 
+                <tbody>
+                    <?php
+                    if (isset($this->listaAtualizacao)) {
+                        foreach ($this->listaAtualizacao as $geral) {
+                            $classe = $geral['multiplataforma'];
+                            $id_multiplataforma = $classe['id_cadastro'];
+                            $id = $classe['id_cadastro'];
+//                            Zend_Debug::dump($geral['multiplataforma']['estado']);
+//        exit();
+
+                            if ($geral['multiplataforma']['estado'] == 'ATIVO') {
+                                $url = '/multiplataforma/atualizacao/update5/id/';
+                                $script = 'aDel';
+                            }
+                            if (isset($classe['obs'])) {
+                                $observacoes = $classe['obs'];
+                            } else {
+                                $observacoes = $classe['observacoes'];
+                            }
+                            if (isset($classe['turnos'])) {
+                                $turno = $classe['turnos'];
+                            } else {
+                                $turno = $classe['turno'];
+                            }
+                            if (isset($classe['analista'])) {
+                                $analista = $classe['analista'];
+                            } else {
+                                $analista = $classe['responsavel'];
+                            }
+
+                            if (isset($classe['status'])) {
+                                $status = $classe['status'];
+                            } else {
+                                $status = $classe['status_sistemas'];
+                            }
+                            ?>
+                            <tr class="seleciona_tr" id="<?php echo $classe['id_cadastro']; ?>">
+                                <td><input class="selecao_inputs" value="" type="hidden" name="incidentes_<?php echo $classe['id_cadastro']; ?>"/></td>
+                                <td style="border: 1px solid #eae8e8; font-size:11px; text-align: center;"><?php echo $classe['sistema']; ?></td>
+                                <?php
+                                if ($status == 'ABERTO') {
+                                    ?>
+                                        <!--<td class="staus_aberto text-white blink_me">-->
+                                    <td class="staus_aberto text-white">
+                                        <?php echo $status; ?>
+                                    </td>
+                                    <?php
+                                } else if ($status == 'PENDENTE') {
+                                    ?>
+                                    <td class="staus_pendente text-white">
+                                        <?php echo $status; ?>
+                                    </td>
+                                    <?php
+                                } else if ($status == 'EM ANDAMENTO') {
+                                    ?>
+                                    <td class="staus_andamento text-white">
+                                        <?php echo $status; ?>
+                                    </td>
+                                    <?php
+                                } else if ($status == 'EM EXECUÇÃO') {
+                                    ?>
+                                    <td class="staus_execucao text-white">
+                                        <?php echo $status; ?>
+                                    </td>
+
+                                    <?php
+                                } else if ($status == 'FECHADO') {
+                                    ?>
+
+                                    <td class="staus_fechado text-white">
+                                        <?php echo $status; ?>
+                                    </td>
+                                    <?php
+                                } else if ($status == 'COM ERRO') {
+                                    ?>
+                                    <td class="staus_erro text-white">
+                                        <?php echo $status; ?>
+                                    </td>
+
+                                    <?php
+                                }
+                                ?>
+                                <td style="border: 1px solid #eae8e8; font-size:11px; text-align: center;"><?php echo date("d/m/Y H:i:s", strtotime($classe['data_hora_inclusao'])); ?></td>
+                                <td style="border: 1px solid #eae8e8; font-size:11px; text-align: center;">
+                                    <span class="border-btn btn-lg btn-outline-primary" style="padding: 10px;">
+                                        <span class="fas fa-user-cog semaforo3" title="<?php echo $analista; ?>">
+                                        </span>
+                                    </span>
+                                </td>
+                                <td style="border: 1px solid #eae8e8; font-size:11px; text-align: center;"><?php echo $classe['ambiente']; ?></td>
+                                <?php
+                                if ($turno == 'NOTURNO') {
+                                    ?>
+                                    <td class="status_noturno text-white2">
+                                        <?php echo $turno; ?>
+                                    </td>
+                                    <?php
+                                } else if ($turno == 'MATUTINO') {
+                                    ?>
+                                    <td class="status_matutino text-white2">
+                                        <?php echo $turno; ?>
+                                    </td>
+                                    <?php
+                                } else if ($turno == 'VESPERTINO') {
+                                    ?>
+                                    <td class="status_vespertino text-white2">
+                                        <?php echo $turno; ?>
+                                    </td>
+                                    <?php
+                                }
+                                ?>
+                                <td style="border: 1px solid #eae8e8; font-size:11px; text-align: center;">
+                                    <span class="border-btn btn-lg btn-outline-warning" style="padding: 10px;">
+                                        <span class="fas fa-comment semaforo3" title="<div class='caixa-tootip'><?php echo $classe['rotina']; ?></div>">
+                                        </span>
+                                    </span>
+                                </td>
+                                <td style="border: 1px solid #eae8e8; font-size:11px; text-align: center;"><?php echo $classe['ferramentas']; ?></td>
+                                <td style="border: 1px solid #eae8e8; font-size:11px; text-align: center;"><?php echo $classe['tipo_servico']; ?></td>
+                                <td style="border: 1px solid #eae8e8; font-size:11px; text-align: center;"><?php echo strtoupper($classe['num_ocorrencia']); ?></td>
+                                <td style="border: 1px solid #eae8e8; font-size:12px; text-align: center;">
+                                    <span class="border-btn btn-lg btn-outline-success" style="padding: 10px;">
+                                        <span class="fas fa-comment semaforo3" title="<div class='caixa-tootip'><?php echo $observacoes; ?></div>">
+                                        </span>
+                                    </span>
+                                </td>
+                                <td style="border-bottom: 1px solid #eae8e8; text-align: center;">
+                                    <a title="Abrir detalhe do indicador" class="acaoInd border-btn btn-outline-primary" id_cadastro="<?php echo $classe['id_cadastro']; ?>" href="#" style="padding: 10px;">
+                                        <span class="fas fa-search formatIcone"></span></a>
+                                </td>
+                                <td style="border-bottom: 1px solid #eae8e8; text-align: center;">
+                                    <a href="<?php echo $this->baseUrl(); ?>/atualizacao/atualizacao/id/<?php echo $id_multiplataforma; ?>">
+                                        <button title='Atualizar' type='button' class='border-btn btn-outline-info' style="padding: 10px;">
+                                            <span class="fas fa-edit"></span>
+                                        </button>
+                                    </a>
+                                </td>
+                                <td style="width: 15px;  border: 1px solid #eae8e8; text-align: center;">
+                                    <a class="<?php echo $script; ?>" href="<?php echo $url . $id_multiplataforma; ?>">
+                                        <button title="Excluir" type="button" class="border-btn btn-outline-danger">
+                                            <span style="padding:4px;" class="fas fa-trash-alt"></span>
+                                        </button>
+                                    </a>
+                                </td>
+                            </tr>
+                            <?php
+                        }
+                    }
+                    ?>
+                </tbody>
+            </table> 
+        </div> 
+    </div>
+</form>
+<div id="listamodal" title="VISUALIZAR HISTÓRICO DE ATENDIMENTO"></div>
+<hr class="mb-4">
+<hr class="mb-4">
+<script type="text/javascript">
+    $(document).ready(function () {
+
+        $("#telefone").mask("9999-9999");
+        $("#cpf").mask("999.999.999-99");
+        $("#cep").mask("99999-999");
+        $("#data").mask("99/99/9999");
+        $("#data1").mask("99/99/9999");
+        $("#hora").mask("99:99");
+        $("#hora1").mask("99:99");
+    });
+</script>
+<script type="text/javascript">
+
+    $(document).ready(function () {
+
+        $("div[rel=modal]").click(function (ev) {
+
+            var id_passagem = $(this).attr('id');
+
+            var url = "/index/id/" + id_passagem
+
+            window.open(url);
+
+            // $(window.document.location).attr("href", url); 
+
+        });
+
+
+    });
+</script>
+<script type="text/javascript">
+    $(".aDel").click(function () {
+        if (!confirm("Tem certeza que deseja EXCLUIR!!")) {
+            return false;
+        }
+
+    });
+</script>
+<script type="text/javascript">
+    $(".ativo").click(function () {
+        if (!confirm("Tem certeza que deseja ATIVAR a ATUALIZAÇÃO!!")) {
+            return false;
+        }
+
+    });
+</script>
+<script type="text/javascript">
+    $(document).ready(function () {
+        var table = $('#example2').DataTable();
+        $('#example2 tbody').on('click', 'tr', function () {
+            $(this).toggleClass('selected');
+        });
+        $('#button').click(function () {
+            alert(table.rows('.selected').data().length + ' row(s) selected');
+        });
+    });
+</script>
+<script type="text/javascript">
+    $(document).ready(function () {
+        var table = $('#example2').DataTable();
+        $('#example2 tbody').on('click', 'tr', function () {
+            if ($(this).hasClass('selected')) {
+                $(this).removeClass('selected');
+                var id = "";
+                id = $(this).attr('id');
+                var procura = "";
+                procura = "incidentes_" + id;
+                $(this).find("td input[name=" + procura + "]").attr('value', '');
+//                $("#example2 tbody tr td input[name="+procura+"]").attr('value','');
+                console.log($(this).find("input[name=" + procura + "]").attr('value'));
+            }
+            else {
+//            table.$('tr.selected').removeClass('selected');
+                $(this).addClass('selected');
+                var id = "";
+                id = $(this).attr('id');
+                var procura = "";
+                procura = "incidentes_" + id;
+                $(this).find("td input[name=" + procura + "]").attr('value', $(this).attr('id'));
+//                $("#example2 tbody tr td input[name="+procura+"]").attr('value',$(this).attr('id'));
+                console.log($(this).find("input[name=" + procura + "]").attr('value'));
+            }
+        });
+        $('#gera_rel').click(function (event) {
+            event.preventDefault(event);
+
+
+            if ($('#incidentes').attr('value') !== "") {
+                $("#form_relatorio").submit();
+            } else {
+                if (!confirm("Selecione um incidente!")) {
+                    return false;
+                }
+            }
+        });
+    });
+</script>
+<script type="text/javascript">
+    $(function () {
+        $('[data-toggle="popover"]').popover()
+        $('.popover-dismiss').popover({
+            trigger: 'focus'
+        })
+    })
+</script>
+
+
+
