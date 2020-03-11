@@ -1,0 +1,613 @@
+<?php
+
+/**
+ * Classe que realiza interações com dados da Monitoração
+ *
+ */
+
+/**
+ * @author p791252
+ *
+ */
+class MultiplataformaDAO extends Extra_Model_DAO {
+
+    public function buscaMonitoracaoGeral() {
+
+        Zend_Loader::loadClass('Monitor');
+        $tabela = new Monitor();
+        $select = $tabela->select()->where("status='OPEN' and tipo_ocorrencia ='INCIDENTE'");
+        $resultado = $tabela->fetchAll($select);
+
+        return $resultado;
+    }
+
+    public function buscaAtualizacoes() {
+
+        Zend_Loader::loadClass('Monitor');
+
+        $util = new UtilDAO();
+        $session = new Zend_Session_Namespace('system');
+        $db = Zend_Db_Table_Abstract::getDefaultAdapter();
+        $data = $util->transformaDataSql($session->data);
+
+        $query = "SELECT id_cadastro, sistema, ambiente, equipe, tipo_servico, num_ocorrencia, odate, ferramentas, rotina, status as estado, 
+                    status_atual, turno_atual, analista_atual, observacoes_atual, data_hora_inclusao_atual
+                    FROM monitoracao.tb_cadastro
+                    WHERE equipe = 'BATCH'
+                    AND status = 'ATIVO'
+                    order by data_hora_inclusao_atual asc";
+        $resultado = $db->fetchAll($query);
+
+        foreach ($resultado as $k2 => $res) {
+
+            $resultados[$k2]['data_hora_inclusao'] = $res['data_hora_inclusao_atual'];
+            $resultados[$k2]['id_cadastro'] = $res['id_cadastro'];
+            $resultados[$k2]['sistema'] = $res['sistema'];
+            $resultados[$k2]['status_sistemas'] = $res['status_atual'];
+            $resultados[$k2]['responsavel'] = $res['analista_atual'];
+
+            $resultados[$k2]['ambiente'] = $res['ambiente'];
+            $resultados[$k2]['equipe'] = $res['equipe'];
+            $resultados[$k2]['turno'] = $res['turno_atual'];
+
+            $resultados[$k2]['tipo_servico'] = $res['tipo_servico'];
+            $resultados[$k2]['num_ocorrencia'] = $res['num_ocorrencia'];
+            $resultados[$k2]['observacoes'] = $res['observacoes_atual'];
+            $resultados[$k2]['odate'] = $res['odate'];
+            $resultados[$k2]['ferramentas'] = $res['ferramentas'];
+
+            $resultados[$k2]['rotina'] = $res['rotina'];
+            $resultados[$k2]['estado'] = $res['estado'];
+        }
+
+        if (isset($resultados)) {
+            return $resultados;
+        }
+    }
+
+    public function buscaAtualizacoesOnline() {
+
+        Zend_Loader::loadClass('Monitor');
+
+        $util = new UtilDAO();
+        $session = new Zend_Session_Namespace('system');
+        $db = Zend_Db_Table_Abstract::getDefaultAdapter();
+        $data = $util->transformaDataSql($session->data);
+
+        $query = "SELECT id_cadastro, sistema, ambiente, equipe, tipo_servico, num_ocorrencia, odate, ferramentas, rotina, status as estado, 
+                    status_atual, turno_atual, analista_atual, observacoes_atual, data_hora_inclusao_atual
+                    FROM monitoracao.tb_cadastro
+                    WHERE equipe = 'ONLINE'
+                    AND status = 'ATIVO'
+                    order by data_hora_inclusao_atual asc";
+        $resultado = $db->fetchAll($query);
+
+        foreach ($resultado as $k2 => $res) {
+
+            $resultados[$k2]['data_hora_inclusao'] = $res['data_hora_inclusao_atual'];
+            $resultados[$k2]['id_cadastro'] = $res['id_cadastro'];
+            $resultados[$k2]['sistema'] = $res['sistema'];
+            $resultados[$k2]['status_sistemas'] = $res['status_atual'];
+            $resultados[$k2]['responsavel'] = $res['analista_atual'];
+
+            $resultados[$k2]['ambiente'] = $res['ambiente'];
+            $resultados[$k2]['equipe'] = $res['equipe'];
+            $resultados[$k2]['turno'] = $res['turno_atual'];
+
+            $resultados[$k2]['tipo_servico'] = $res['tipo_servico'];
+            $resultados[$k2]['num_ocorrencia'] = $res['num_ocorrencia'];
+            $resultados[$k2]['observacoes'] = $res['observacoes_atual'];
+            $resultados[$k2]['odate'] = $res['odate'];
+            $resultados[$k2]['ferramentas'] = $res['ferramentas'];
+
+            $resultados[$k2]['rotina'] = $res['rotina'];
+            $resultados[$k2]['estado'] = $res['estado'];
+        }
+
+        if (isset($resultados)) {
+            return $resultados;
+        }
+    }
+
+    public function buscaFerramenta() {
+        Zend_Loader::loadClass('Cadastro');
+        Zend_Loader::loadClass('Atualizacao');
+
+        $query = "SELECT id_ferramenta, ferramenta, status
+                  FROM monitoracao.tb_ferramenta_multi                  
+                  order by ferramenta ASC";
+        $db = Zend_Db_Table_Abstract::getDefaultAdapter();
+        $resultado = $db->fetchAll($query);
+        return $resultado;
+    }
+
+    public function buscaSistema() {
+        Zend_Loader::loadClass('Cadastro');
+        Zend_Loader::loadClass('Atualizacao');
+
+        $query = "SELECT id_sistema, sistema, status, ambiente
+                  FROM monitoracao.tb_sistema_atualizacao_multiplataforma
+                  order by sistema ASC";
+        $db = Zend_Db_Table_Abstract::getDefaultAdapter();
+        $resultado = $db->fetchAll($query);
+        return $resultado;
+    }
+    
+    public function buscaChecklistManha() {
+
+        Zend_Loader::loadClass('Monitor');
+
+        $util = new UtilDAO();
+        $session = new Zend_Session_Namespace('system');
+        $db = Zend_Db_Table_Abstract::getDefaultAdapter();
+        $data = $util->transformaDataSql($session->data);
+
+        $query = "SELECT id_checklist, sistema, status_checklist, data_hora_inclusao_checklist, 
+                    responsavel, observacoes, odate, equipe, turno
+                    FROM monitoracao.tb_checklist
+                    where equipe = 'BATCH'
+                    and turno = 'MANHA'
+                    and odate = '$data'";
+        $resultado = $db->fetchAll($query);
+
+        foreach ($resultado as $k2 => $res) {
+
+            $resultados[$k2]['sistema'] = $res['sistema'];
+            $resultados[$k2]['id_cadastro'] = $res['id_checklist'];
+            $resultados[$k2]['status_checklist'] = $res['status_checklist'];
+            $resultados[$k2]['data_hora_inclusao_checklist'] = $res['data_hora_inclusao_checklist'];
+            $resultados[$k2]['responsavel'] = $res['responsavel'];
+            $resultados[$k2]['observacoes'] = $res['observacoes'];
+            $resultados[$k2]['odate'] = $res['odate'];
+            $resultados[$k2]['equipe'] = $res['equipe'];
+            $resultados[$k2]['turno'] = $res['turno'];
+        }
+
+        if (isset($resultados)) {
+            return $resultados;
+        }
+    }
+    
+    public function buscaChecklistTarde() {
+
+        Zend_Loader::loadClass('Monitor');
+
+        $util = new UtilDAO();
+        $session = new Zend_Session_Namespace('system');
+        $db = Zend_Db_Table_Abstract::getDefaultAdapter();
+        $data = $util->transformaDataSql($session->data);
+
+        $query = "SELECT id_checklist, sistema, status_checklist, data_hora_inclusao_checklist, 
+                    responsavel, observacoes, odate, equipe, turno
+                    FROM monitoracao.tb_checklist
+                    where equipe = 'BATCH'
+                    and turno = 'TARDE'
+                    and odate = '$data'";
+        $resultado = $db->fetchAll($query);
+
+        foreach ($resultado as $k2 => $res) {
+
+            $resultados[$k2]['sistema'] = $res['sistema'];
+            $resultados[$k2]['id_cadastro'] = $res['id_checklist'];
+            $resultados[$k2]['status_checklist'] = $res['status_checklist'];
+            $resultados[$k2]['data_hora_inclusao_checklist'] = $res['data_hora_inclusao_checklist'];
+            $resultados[$k2]['responsavel'] = $res['responsavel'];
+            $resultados[$k2]['observacoes'] = $res['observacoes'];
+            $resultados[$k2]['odate'] = $res['odate'];
+            $resultados[$k2]['equipe'] = $res['equipe'];
+            $resultados[$k2]['turno'] = $res['turno'];
+        }
+
+        if (isset($resultados)) {
+            return $resultados;
+        }
+    }
+    
+    public function buscaChecklistNoite() {
+
+        Zend_Loader::loadClass('Monitor');
+
+        $util = new UtilDAO();
+        $session = new Zend_Session_Namespace('system');
+        $db = Zend_Db_Table_Abstract::getDefaultAdapter();
+        $data = $util->transformaDataSql($session->data);
+
+        $query = "SELECT id_checklist, sistema, status_checklist, data_hora_inclusao_checklist, 
+                    responsavel, observacoes, odate, equipe, turno
+                    FROM monitoracao.tb_checklist
+                    where equipe = 'BATCH'
+                    and turno = 'NOITE'
+                    and odate = '$data'";
+        $resultado = $db->fetchAll($query);
+
+        foreach ($resultado as $k2 => $res) {
+
+            $resultados[$k2]['sistema'] = $res['sistema'];
+            $resultados[$k2]['id_cadastro'] = $res['id_checklist'];
+            $resultados[$k2]['status_checklist'] = $res['status_checklist'];
+            $resultados[$k2]['data_hora_inclusao_checklist'] = $res['data_hora_inclusao_checklist'];
+            $resultados[$k2]['responsavel'] = $res['responsavel'];
+            $resultados[$k2]['observacoes'] = $res['observacoes'];
+            $resultados[$k2]['odate'] = $res['odate'];
+            $resultados[$k2]['equipe'] = $res['equipe'];
+            $resultados[$k2]['turno'] = $res['turno'];
+        }
+
+        if (isset($resultados)) {
+            return $resultados;
+        }
+    }
+    
+    public function buscaChecklistOnManha() {
+
+        Zend_Loader::loadClass('Monitor');
+
+        $util = new UtilDAO();
+        $session = new Zend_Session_Namespace('system');
+        $db = Zend_Db_Table_Abstract::getDefaultAdapter();
+        $data = $util->transformaDataSql($session->data);
+
+        $query = "SELECT id_checklist, sistema, status_checklist, data_hora_inclusao_checklist, 
+                    responsavel, observacoes, odate, equipe, turno
+                    FROM monitoracao.tb_checklist
+                    where equipe = 'ONLINE'
+                    and turno = 'MANHA'
+                    and odate = '$data'";
+        $resultado = $db->fetchAll($query);
+
+        foreach ($resultado as $k2 => $res) {
+
+            $resultados[$k2]['sistema'] = $res['sistema'];
+            $resultados[$k2]['id_cadastro'] = $res['id_checklist'];
+            $resultados[$k2]['status_checklist'] = $res['status_checklist'];
+            $resultados[$k2]['data_hora_inclusao_checklist'] = $res['data_hora_inclusao_checklist'];
+            $resultados[$k2]['responsavel'] = $res['responsavel'];
+            $resultados[$k2]['observacoes'] = $res['observacoes'];
+            $resultados[$k2]['odate'] = $res['odate'];
+            $resultados[$k2]['equipe'] = $res['equipe'];
+            $resultados[$k2]['turno'] = $res['turno'];
+        }
+
+        if (isset($resultados)) {
+            return $resultados;
+        }
+    }
+    
+    public function buscaChecklistOnTarde() {
+
+        Zend_Loader::loadClass('Monitor');
+
+        $util = new UtilDAO();
+        $session = new Zend_Session_Namespace('system');
+        $db = Zend_Db_Table_Abstract::getDefaultAdapter();
+        $data = $util->transformaDataSql($session->data);
+
+        $query = "SELECT id_checklist, sistema, status_checklist, data_hora_inclusao_checklist, 
+                    responsavel, observacoes, odate, equipe, turno
+                    FROM monitoracao.tb_checklist
+                    where equipe = 'ONLINE'
+                    and turno = 'TARDE'
+                    and odate = '$data'";
+        $resultado = $db->fetchAll($query);
+
+        foreach ($resultado as $k2 => $res) {
+
+            $resultados[$k2]['sistema'] = $res['sistema'];
+            $resultados[$k2]['id_cadastro'] = $res['id_checklist'];
+            $resultados[$k2]['status_checklist'] = $res['status_checklist'];
+            $resultados[$k2]['data_hora_inclusao_checklist'] = $res['data_hora_inclusao_checklist'];
+            $resultados[$k2]['responsavel'] = $res['responsavel'];
+            $resultados[$k2]['observacoes'] = $res['observacoes'];
+            $resultados[$k2]['odate'] = $res['odate'];
+            $resultados[$k2]['equipe'] = $res['equipe'];
+            $resultados[$k2]['turno'] = $res['turno'];
+        }
+
+        if (isset($resultados)) {
+            return $resultados;
+        }
+    }
+    
+    public function buscaChecklistOnNoturno() {
+
+        Zend_Loader::loadClass('Monitor');
+
+        $util = new UtilDAO();
+        $session = new Zend_Session_Namespace('system');
+        $db = Zend_Db_Table_Abstract::getDefaultAdapter();
+        $data = $util->transformaDataSql($session->data);
+
+        $query = "SELECT id_checklist, sistema, status_checklist, data_hora_inclusao_checklist, 
+                    responsavel, observacoes, odate, equipe, turno
+                    FROM monitoracao.tb_checklist
+                    where equipe = 'ONLINE'
+                    and turno = 'NOITE'
+                    and odate = '$data'";
+        $resultado = $db->fetchAll($query);
+
+        foreach ($resultado as $k2 => $res) {
+
+            $resultados[$k2]['sistema'] = $res['sistema'];
+            $resultados[$k2]['id_cadastro'] = $res['id_checklist'];
+            $resultados[$k2]['status_checklist'] = $res['status_checklist'];
+            $resultados[$k2]['data_hora_inclusao_checklist'] = $res['data_hora_inclusao_checklist'];
+            $resultados[$k2]['responsavel'] = $res['responsavel'];
+            $resultados[$k2]['observacoes'] = $res['observacoes'];
+            $resultados[$k2]['odate'] = $res['odate'];
+            $resultados[$k2]['equipe'] = $res['equipe'];
+            $resultados[$k2]['turno'] = $res['turno'];
+        }
+
+        if (isset($resultados)) {
+            return $resultados;
+        }
+    }
+
+    public function buscaMultiplataformaBatch() {
+        Zend_Loader::loadClass('Cadastro');
+        Zend_Loader::loadClass('Atualizacao');
+
+        $util = new UtilDAO();
+        $session = new Zend_Session_Namespace('system');
+        $db = Zend_Db_Table_Abstract::getDefaultAdapter();
+        $data = $util->transformaDataSql($session->data);
+
+        $query = "SELECT id_cadastro, sistema, ambiente, equipe, tipo_servico, num_ocorrencia, odate, ferramentas, rotina, status as estado, 
+                    status_atual, turno_atual, analista_atual, observacoes_atual, data_hora_inclusao_atual
+                    FROM monitoracao.tb_cadastro
+                    WHERE status_atual in ('ABERTO','PENDENTE','EM ANDAMENTO','EM EXECUÇÃO','COM ERRO')
+                    AND equipe = 'BATCH'
+                    AND status = 'ATIVO'
+                    order by data_hora_inclusao_atual desc";
+        $resultado = $db->fetchAll($query);
+
+        foreach ($resultado as $k2 => $res) {
+            $resultados[$k2]['data_hora_inclusao'] = $res['data_hora_inclusao_atual'];
+            $resultados[$k2]['id_cadastro'] = $res['id_cadastro'];
+            $resultados[$k2]['sistema'] = $res['sistema'];
+            $resultados[$k2]['status_sistemas'] = $res['status_atual'];
+            $resultados[$k2]['responsavel'] = $res['analista_atual'];
+
+            $resultados[$k2]['ambiente'] = $res['ambiente'];
+            $resultados[$k2]['equipe'] = $res['equipe'];
+            $resultados[$k2]['turno'] = $res['turno_atual'];
+
+            $resultados[$k2]['tipo_servico'] = $res['tipo_servico'];
+            $resultados[$k2]['num_ocorrencia'] = $res['num_ocorrencia'];
+            $resultados[$k2]['observacoes'] = $res['observacoes_atual'];
+            $resultados[$k2]['odate'] = $res['odate'];
+            $resultados[$k2]['ferramentas'] = $res['ferramentas'];
+
+            $resultados[$k2]['rotina'] = $res['rotina'];
+            $resultados[$k2]['estado'] = $res['estado'];
+        }
+
+        if (isset($resultados)) {
+            return $resultados;
+        }
+    }
+
+    public function histMultiplataformaBatch() {
+        Zend_Loader::loadClass('MultiplataformaDAO');
+
+        $util = new UtilDAO();
+        $auth = Zend_Auth::getInstance();
+        $id_cadastro = $this->getParam('id_cadastro');
+        $this->view->usuario = $auth->getIdentity();
+        $this->_helper->layout->disableLayout();
+        $session = new Zend_Session_Namespace('system');
+        $db = Zend_Db_Table_Abstract::getDefaultAdapter();
+        $data = $util->transformaDataSql($session->data);
+
+
+        $query = "SELECT a.id_cadastro, a.sistema, a.status_sistemas, a.data_hora_inclusao, a.responsavel, a.ambiente, a.equipe, a.turno, a.tipo_servico, a.num_ocorrencia, a.observacoes, a.odate, a.ferramentas, a.rotina, a.status AS estado, 
+                  b.data_hora_inclusao as data_hora, b.status_sistemas as status, b.turno as turnos, b.responsavel as analista, b.observacoes as obs, b.id_cadastro as id
+                  FROM monitoracao.tb_cadastro a
+                  LEFT JOIN monitoracao.tb_cadastro_hist b
+                  ON a.id_cadastro = b.id_cadastro
+                  WHERE a.id_cadastro = '$id_cadastro' 
+                  AND a.status = 'ATIVO'
+                  AND a.status_sistemas in ('ABERTO','PENDENTE','EM ANDAMENTO','EM EXECUÇÃO')	
+		  order by a.data_hora_inclusao desc";
+        $resultado = $db->fetchAll($query);
+        $resultados = array();
+        foreach ($resultado as $k2 => $res) {
+
+            $resultados[$k2]['data_hora'] = $res['data_hora'];
+            $resultados[$k2]['id'] = $res['id'];
+            $resultados[$k2]['status'] = $res['status'];
+            $resultados[$k2]['analista'] = $res['analista'];
+            $resultados[$k2]['turnos'] = $res['turnos'];
+            $resultados[$k2]['obs'] = $res['obs'];
+
+            $resultados[$k2]['data_hora_inclusao'] = $res['data_hora_inclusao'];
+            $resultados[$k2]['id_cadastro'] = $res['id_cadastro'];
+            $resultados[$k2]['sistema'] = $res['sistema'];
+            $resultados[$k2]['status_sistemas'] = $res['status_sistemas'];
+            $resultados[$k2]['responsavel'] = $res['responsavel'];
+            $resultados[$k2]['ambiente'] = $res['ambiente'];
+            $resultados[$k2]['equipe'] = $res['equipe'];
+            $resultados[$k2]['turno'] = $res['turno'];
+            $resultados[$k2]['tipo_servico'] = $res['tipo_servico'];
+            $resultados[$k2]['num_ocorrencia'] = $res['num_ocorrencia'];
+            $resultados[$k2]['observacoes'] = $res['observacoes'];
+            $resultados[$k2]['odate'] = $res['odate'];
+            $resultados[$k2]['ferramentas'] = $res['ferramentas'];
+            $resultados[$k2]['rotina'] = $res['rotina'];
+            $resultados[$k2]['equipe'] = $res['equipe'];
+        }
+        if (isset($resultados)) {
+            return $resultados;
+        }
+    }
+
+    public function buscaMultiplataformaOline() {
+
+        Zend_Loader::loadClass('Monitor');
+
+        $util = new UtilDAO();
+        $session = new Zend_Session_Namespace('system');
+        $db = Zend_Db_Table_Abstract::getDefaultAdapter();
+        $data = $util->transformaDataSql($session->data);
+
+        $query = "SELECT id_cadastro, sistema, ambiente, equipe, tipo_servico, num_ocorrencia, odate, ferramentas, rotina, status as estado, 
+                    status_atual, turno_atual, analista_atual, observacoes_atual, data_hora_inclusao_atual
+                    FROM monitoracao.tb_cadastro
+                    WHERE status_atual in ('ABERTO','PENDENTE','EM ANDAMENTO','EM EXECUÇÃO','COM ERRO')
+                    AND equipe = 'ONLINE'
+                    AND status = 'ATIVO'
+                    order by data_hora_inclusao_atual desc";
+        $resultado = $db->fetchAll($query);
+
+        foreach ($resultado as $k2 => $res) {
+
+            $resultados[$k2]['data_hora_inclusao'] = $res['data_hora_inclusao_atual'];
+            $resultados[$k2]['id_cadastro'] = $res['id_cadastro'];
+            $resultados[$k2]['sistema'] = $res['sistema'];
+            $resultados[$k2]['status_sistemas'] = $res['status_atual'];
+            $resultados[$k2]['responsavel'] = $res['analista_atual'];
+
+            $resultados[$k2]['ambiente'] = $res['ambiente'];
+            $resultados[$k2]['equipe'] = $res['equipe'];
+            $resultados[$k2]['turno'] = $res['turno_atual'];
+
+            $resultados[$k2]['tipo_servico'] = $res['tipo_servico'];
+            $resultados[$k2]['num_ocorrencia'] = $res['num_ocorrencia'];
+            $resultados[$k2]['observacoes'] = $res['observacoes_atual'];
+            $resultados[$k2]['odate'] = $res['odate'];
+            $resultados[$k2]['ferramentas'] = $res['ferramentas'];
+
+            $resultados[$k2]['rotina'] = $res['rotina'];
+            $resultados[$k2]['estado'] = $res['estado'];
+        }
+
+        if (isset($resultados)) {
+            return $resultados;
+        }
+    }
+
+//    public function buscaMultiplataformaIncidente() {
+//
+//        Zend_Loader::loadClass('Monitor');
+//
+//        $util = new UtilDAO();
+//        $session = new Zend_Session_Namespace('system');
+//        $db = Zend_Db_Table_Abstract::getDefaultAdapter();
+//        $data = $util->transformaDataSql($session->data);
+//        $resultados = array();
+//        
+//        $statement = $db->prepare('select * from monitoracao.tb_cadastro');
+//        $statement->execute();
+//        
+//        $data = [];
+//        
+//        $data = $statement->fetchAll(\PDO::FETCH_ASSOC);
+//        $response = ['data' => $data];
+//        
+//        $res = json_encode($response);
+//        return $response;
+//    }
+
+    public function buscaMultiplataformaOline2() {
+
+        Zend_Loader::loadClass('Monitor');
+
+        $util = new UtilDAO();
+        $session = new Zend_Session_Namespace('system');
+        $db = Zend_Db_Table_Abstract::getDefaultAdapter();
+        $data = $util->transformaDataSql($session->data);
+
+        $query = "SELECT a.id_cadastro, a.sistema, a.status_sistemas, a.data_hora_inclusao, a.responsavel, a.ambiente, a.equipe, a.turno, a.tipo_servico, a.num_ocorrencia, a.observacoes, a.odate, a.ferramentas, a.rotina, a.status as estado, 
+                  b.data_hora_inclusao as data_hora, b.status_sistemas as status, b.turno as turnos, b.responsavel as analista, b.observacoes as obs, b.id_cadastro as id
+                  FROM monitoracao.tb_cadastro a
+                  LEFT JOIN monitoracao.tb_cadastro_hist b
+                  ON a.id_cadastro = b.id_cadastro 
+                  WHERE a.odate = '$data'
+                  AND a.equipe = 'ONLINE'
+		  AND a.turno = 'MATUTINO'
+                  AND a.status_sistemas in ('ABERTO','PENDENTE','EM ANDAMENTO','EM EXECUÇÃO')
+                  AND a.status = 'ATIVO'
+		  order by b.data_hora_inclusao desc";
+        $resultado = $db->fetchAll($query);
+
+        foreach ($resultado as $k2 => $res) {
+
+            $resultados[$k2]['data_hora'] = $res['data_hora'];
+            $resultados[$k2]['id'] = $res['id'];
+            $resultados[$k2]['status'] = $res['status'];
+            $resultados[$k2]['analista'] = $res['analista'];
+            $resultados[$k2]['turnos'] = $res['turnos'];
+            $resultados[$k2]['obs'] = $res['obs'];
+
+            if (isset($res['data_hora'])) {
+                $resultados[$k2]['data_hora_inclusao'] = $res['data_hora'];
+            } else {
+                $resultados[$k2]['data_hora_inclusao'] = $res['data_hora_inclusao'];
+            }
+            if (isset($res['id'])) {
+                $resultados[$k2]['id_cadastro'] = $res['id'];
+            } else {
+                $resultados[$k2]['id_cadastro'] = $res['id_cadastro'];
+            }
+            $resultados[$k2]['sistema'] = $res['sistema'];
+            if (isset($res['status'])) {
+                $resultados[$k2]['status_sistemas'] = $res['status'];
+            } else {
+                $resultados[$k2]['status_sistemas'] = $res['status_sistemas'];
+            }
+
+            if (isset($res['analista'])) {
+                $resultados[$k2]['responsavel'] = $res['analista'];
+            } else {
+                $resultados[$k2]['responsavel'] = $res['responsavel'];
+            }
+            $resultados[$k2]['ambiente'] = $res['ambiente'];
+            $resultados[$k2]['equipe'] = $res['equipe'];
+            if (isset($res['turnos'])) {
+                if ($res['turnos'] != "MATUTINO") {
+                    $resultados[$k2]['turno'] = "<span style='color:#fff; background-color: #ff3333; padding: 15px; border-radius: 8px;'>" . "<b>" . $res['turnos'] . "</b>" . "</span>";
+                } else {
+                    $resultados[$k2]['turno'] = $res['turnos'];
+                }
+            } else {
+                $resultados[$k2]['turno'] = $res['turno'];
+            }
+            $resultados[$k2]['tipo_servico'] = $res['tipo_servico'];
+            $resultados[$k2]['num_ocorrencia'] = $res['num_ocorrencia'];
+            if (isset($res['obs'])) {
+                $resultados[$k2]['observacoes'] = $res['obs'];
+            } else {
+                $resultados[$k2]['observacoes'] = $res['observacoes'];
+            }
+            $resultados[$k2]['odate'] = $res['odate'];
+            $resultados[$k2]['ferramentas'] = $res['ferramentas'];
+            $resultados[$k2]['rotina'] = $res['rotina'];
+            $resultados[$k2]['equipe'] = $res['equipe'];
+        }
+
+        if (isset($resultados)) {
+            return $resultados;
+        }
+    }
+
+    public function buscaAtualizacaoInativa() {
+        Zend_Loader::loadClass('AtualizacaoMultiplataforma');
+        Zend_Loader::loadClass('CadastroMultiplataforma');
+
+        $query = "SELECT id_cadastro, sistema, status_sistemas, data_hora_inclusao, 
+                    responsavel, ambiente, equipe, turno, tipo_servico, num_ocorrencia, 
+                    observacoes, odate, ferramentas, rotina
+                    FROM monitoracao.tb_cadastro
+                    where status_sistemas = 'ABERTO'
+                    order by data_hora_inclusao asc";
+
+        $db = Zend_Db_Table_Abstract::getDefaultAdapter();
+
+        $resultado = $db->fetchAll($query);
+
+        $this->view->dados = $resultado;
+    }
+
+}
+
+?>
