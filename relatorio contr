@@ -1,0 +1,84 @@
+<?php
+
+class RelatorioController extends Zend_Controller_Action {
+
+    public function init() {
+        Zend_Loader::loadClass('UtilDAO');
+        Zend_Loader::loadClass('Monitor');
+    }
+
+    public function preDispatch() {
+        $util = new UtilDAO();
+        $this->view->datahora = $util->dataAtualTela();
+    }
+
+    public function indexAction() {
+
+        $auth = Zend_Auth::getInstance();
+
+        if ($auth->hasIdentity()) {
+            $this->view->usuario = $auth->getIdentity();
+            $this->_helper->layout->setLayout('inicial');
+
+            $monitor = new Monitor();
+
+            if (isset($_POST['campobusca'])) {
+
+                $data_inicial = $_POST['data_inicial'];
+                $data_inicial1 = $_POST['data_inicial1'];
+                $sistema = $_POST['sistema'];
+                $campobusca = $_POST['campobusca'];
+
+                $select = $monitor->select()->where("data_inicial BETWEEN '$data_inicial 00:00:00' and '$data_inicial1 23:59:59' and ocorrencia ilike '%$campobusca%' and sistema ilike '%$sistema%' and status='COMPLETED'")->order("data_inicial DESC");
+
+                $listaMonitor = $monitor->fetchAll($select);
+
+                $this->view->listaMonitor = $listaMonitor;
+            }
+        }
+    }
+
+    public function cadastrarAction() {
+        $auth = Zend_Auth::getInstance();
+
+        if ($auth->hasIdentity()) {
+            $this->view->usuario = $auth->getIdentity();
+            $this->_helper->layout->setLayout('inicial');
+
+            $this->render('index');
+        } else {
+            $this->_redirect('login/index');
+        }
+    }
+
+    public function visualizarAction() {
+
+        $passagem = new Monitor();
+
+        $id_monitoracao = $this->_getParam('id');
+
+        if ($id_monitoracao != "") {
+
+            $consultaPassagem = $passagem->fetchRow("id_passagem = '$id_monitoracao'");
+
+            $this->view->passagem = $consultaPassagem;
+        }
+    }
+
+    public function editarAction() {
+
+        $passagem = new Monitor();
+
+        $id_monitoracao = $this->_getParam('id');
+
+        if ($id_monitoracao != "") {
+
+            $consultaPassagem = $passagem->fetchRow("id_passagem = '$id_monitoracao'");
+
+            $this->view->passagem = $consultaPassagem;
+        }
+    }
+
+}
+
+?>
