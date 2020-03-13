@@ -1,0 +1,226 @@
+<?php
+
+class IndexController extends Zend_Controller_Action {
+
+    public function init() {
+        Zend_Loader::loadClass('UtilDAO');
+        Zend_Loader::loadClass('MultiplataformaDAO');
+        Zend_Loader::loadClass('UsuarioBancoMultiplataforma');
+    }
+
+    public function preDispatch() {
+        $util = new UtilDAO();
+        $this->view->datahora = $util->dataAtualTela();
+    }
+
+    public function indexAction() {
+//        batch
+        Zend_Loader::loadClass('MultiplataformaDAO');
+        $auth = Zend_Auth::getInstance();
+        if ($auth->hasIdentity()) {
+            $this->view->usuario = $auth->getIdentity();
+            $this->_helper->layout->setLayout('inicial');
+            $atualizacao = new MultiplataformaDAO();
+            $resposta = $atualizacao->buscaMultiplataformaBatch();
+            if (isset($resposta)) {
+                $visualizars = array_reverse($resposta);
+                $resultadoAtualizacao = array();
+                if (isset($visualizars)) {
+                    foreach ($visualizars as $visualizar) {
+                        $id_monitoracao = $visualizar['id_cadastro'];
+                        $resultadoAtualizacao["'$id_monitoracao'"]['multiplataforma'] = $visualizar;
+                    }
+                }
+                $this->view->listaAtualizacao = $resultadoAtualizacao;
+            }
+        }
+    }
+    public function batchAction() {
+//        batch
+        Zend_Loader::loadClass('MultiplataformaDAO');
+        $auth = Zend_Auth::getInstance();
+        if ($auth->hasIdentity()) {
+            $this->view->usuario = $auth->getIdentity();
+            $this->_helper->layout->setLayout('inicial');
+            $atualizacao = new MultiplataformaDAO();
+            $resposta = $atualizacao->buscaMultiplataformaBatch();
+            if (isset($resposta)) {
+                $visualizars = array_reverse($resposta);
+                $resultadoAtualizacao = array();
+                if (isset($visualizars)) {
+                    foreach ($visualizars as $visualizar) {
+                        $id_monitoracao = $visualizar['id_cadastro'];
+                        $resultadoAtualizacao["'$id_monitoracao'"]['multiplataforma'] = $visualizar;
+                    }
+                }
+                $this->view->listaAtualizacao = $resultadoAtualizacao;
+            }
+        }
+    }
+
+    public function onlineAction() {
+        $usuario = Zend_Auth::getInstance()->getStorage()->read();
+        $this->view->usuario = $usuario;
+        $monitor = new MultiplataformaDAO();
+        $resposta = $monitor->buscaMultiplataformaOline();
+        if (isset($resposta)) {
+            $dados = array_reverse($resposta);
+            $resultadoOnline = array();
+            foreach ($dados as $v) {
+                $id_monitoracao = $v['id_cadastro'];
+                $resultadoOnline["'$id_monitoracao'"]['multiplataforma'] = $v;
+            }
+            $this->view->listaAtualizacao = $resultadoOnline;
+        }
+        $this->_helper->layout->setLayout('inicial');
+        $this->render('online');
+    }
+    
+    public function visualizardefinitivoAction() {
+        $usuario = Zend_Auth::getInstance()->getStorage()->read();
+        $this->view->usuario = $usuario;
+        $monitor = new MultiplataformaDAO();
+        $resposta = $monitor->buscaMultiplataformaIncidente();
+
+        $this->_helper->json->sendJson($resposta);
+        $this->_helper->layout->setLayout('inicial');
+        $this->render('incidentes');
+    }
+
+    public function incidentesAction() {
+        $usuario = Zend_Auth::getInstance()->getStorage()->read();
+        $this->view->usuario = $usuario;
+        $this->_helper->layout->setLayout('inicial');
+        $this->render('incidentes');
+    }
+
+    protected function verificaStatus($multiplataforma) {
+
+        $retorno = '';
+        if ($multiplataforma['status_sistemas'] == 'ABERTO') {
+            $retorno = "";
+        } else {
+            $retorno = "";
+        }
+        return $retorno;
+    }
+
+    public function salvarAction() {
+        Zend_Loader::loadClass('UsuarioBancoMultiplataforma');
+        $auth = Zend_Auth::getInstance();
+
+        if ($auth->hasIdentity()) {
+            $monitor = new UsuarioBancoMultiplataforma();
+            $idUsuario = $_POST['id_usuario_multiplataforma'];
+//            Zend_Debug::dump($idUsuario);
+//            exit();
+            $arrayDados = array();
+            $arrayDados['nome'] = strtoupper($_POST['nome']);
+            $arrayDados['usuario'] = strtoupper($_POST['usuario']);
+            $arrayDados['id_perfil_multiplataforma'] = $_POST['id_perfil'];
+            $arrayDados['senha'] = $_POST['senha'];
+            $arrayDados['dt_data_hora_inclusao'] = date("Y-m-d H:i:s");
+
+            if ($idUsuario == "") {
+                $usuario = $_POST['usuario'];
+                $consultaUsuario = $monitor->fetchRow("usuario = '$usuario' ");
+                if ($consultaUsuario == null) {
+                    $monitor->insert($arrayDados);
+                } else {
+                    $this->_redirect('/usuario/cadastrar');
+                }
+            } else {
+                $monitor->update($arrayDados, "id_usuario_multiplataforma = '$idUsuario'");
+            }
+            $this->_redirect("/usuario/listar");
+        } else {
+            $this->_redirect('/login/index');
+        }
+    }
+
+    public function detalheindicadorAction() {
+        Zend_Loader::loadClass('MultiplataformaDAO');
+
+        $util = new UtilDAO();
+        $auth = Zend_Auth::getInstance();
+        $id_cadastro = $this->getParam('id_cadastro');
+        $this->view->usuario = $auth->getIdentity();
+        $this->_helper->layout->disableLayout();
+        $session = new Zend_Session_Namespace('system');
+        $db = Zend_Db_Table_Abstract::getDefaultAdapter();
+        $data = $util->transformaDataSql($session->data);
+
+
+        $query = "SELECT a.id_cadastro, a.sistema, a.status_sistemas, a.data_hora_inclusao, a.responsavel, a.ambiente, a.equipe, a.turno, a.tipo_servico, a.num_ocorrencia, a.observacoes, a.odate, a.ferramentas, a.rotina, a.status, 
+                  b.data_hora_inclusao as data_hora, b.status_sistemas as status, b.turno as turnos, b.responsavel as analista, b.observacoes as obs, b.id_cadastro as id
+                  FROM monitoracao.tb_cadastro a
+                  LEFT JOIN monitoracao.tb_cadastro_hist b
+                  ON a.id_cadastro = b.id_cadastro
+                  WHERE a.id_cadastro = '$id_cadastro' 
+                  AND a.status_sistemas in ('ABERTO','PENDENTE','EM ANDAMENTO','EM EXECUÇÃO')	
+		  order by a.data_hora_inclusao desc";
+        $resultado = $db->fetchAll($query);
+
+        $query_hist = "SELECT id_hist, data_hora_inclusao as data_hora, status_sistemas as status, turno as turnos, responsavel as analista, observacoes as obs, id_cadastro as id
+                       FROM monitoracao.tb_cadastro_hist
+                       WHERE id_cadastro = '$id_cadastro' 
+                       order by data_hora_inclusao desc";
+        $resultado_hist = $db->fetchAll($query_hist);
+
+        $resultados = array();
+
+        foreach ($resultado as $res) {
+            $resultados['id_cadastro'] = $res['id_cadastro'];
+
+            $resultados['data_hora_inclusao'] = $res['data_hora_inclusao'];
+            $resultados['sistema'] = $res['sistema'];
+            $resultados['status_sistemas'] = $res['status_sistemas'];
+            $resultados['responsavel'] = $res['responsavel'];
+            $resultados['ambiente'] = $res['ambiente'];
+            $resultados['equipe'] = $res['equipe'];
+            $resultados['turno'] = $res['turno'];
+            $resultados['tipo_servico'] = $res['tipo_servico'];
+            $resultados['num_ocorrencia'] = $res['num_ocorrencia'];
+            $resultados['observacoes'] = $res['observacoes'];
+            $resultados['odate'] = $res['odate'];
+            $resultados['ferramentas'] = $res['ferramentas'];
+            $resultados['rotina'] = $res['rotina'];
+            $resultados['equipe'] = $res['equipe'];
+            $resultados['id'] = $res['id'];
+        }
+
+        $resultados_hist = array();
+
+        foreach ($resultado_hist as $k => $res) {
+
+            $resultados_hist[$k]['id_hist'] = $res['id_hist'];
+            $resultados_hist[$k]['id'] = $res['id'];
+            $resultados_hist[$k]['data_hora'] = $res['data_hora'];
+            $resultados_hist[$k]['status'] = $res['status'];
+            $resultados_hist[$k]['analista'] = $res['analista'];
+            $resultados_hist[$k]['turnos'] = $res['turnos'];
+            $resultados_hist[$k]['obs'] = $res['obs'];
+        }
+
+
+        $resultadoAtualizacao = array();
+        if (isset($resultados)) {
+            foreach ($resultados as $visualizar) {
+                $id_monitoracao = $resultados['id_cadastro'];
+                $resultadoAtualizacao["'$id_monitoracao'"]['historico'] = $resultados;
+            }
+        }
+        $resultadoAtualizacao_hist = array();
+        if (isset($resultados_hist)) {
+            foreach ($resultados_hist as $visualizar) {
+                $resultadoAtualizacao_hist = $resultados_hist;
+            }
+        }
+
+        $this->view->dados = $resultadoAtualizacao;
+        $this->view->dados_hist = $resultadoAtualizacao_hist;
+    }
+
+}
+
+?>
