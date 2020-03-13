@@ -1,0 +1,128 @@
+<?php
+
+class UsuarioController extends Zend_Controller_Action {
+
+    public function init() {
+        Zend_Loader::loadClass('UtilDAO');
+        Zend_Loader::loadClass('UsuarioBancoMultiplataforma');
+    }
+
+    public function preDispatch() {
+        $util = new UtilDAO();
+        $this->view->datahora = $util->dataAtualTela();
+    }
+
+    public function indexAction() {
+        
+    }
+
+    public function cadastrarAction() {
+        $auth = Zend_Auth::getInstance();
+
+        $db = Zend_Db_Table_Abstract::getDefaultAdapter();
+        $select = "SELECT id_perfil_multiplataforma, nome FROM monitoracao.tb_perfil_multiplataforma";
+        $listaPerfil = $db->query($select)->fetchAll();
+
+        $this->view->perfil = $listaPerfil;
+//        Zend_Debug::dump();
+//        exit();
+        if ($auth->hasIdentity()) {
+            $this->view->usuario = $auth->getIdentity();
+            $this->_helper->layout->setLayout('inicial');
+            $this->render('index');
+        } else {
+            $this->_redirect('login/index');
+        }
+    }
+
+    public function salvarAction() {
+        Zend_Loader::loadClass('UsuarioBancoMultiplataforma');
+        $auth = Zend_Auth::getInstance();
+
+        if ($auth->hasIdentity()) {
+            $monitor = new UsuarioBancoMultiplataforma();
+            $idUsuario = $_POST['id_usuario_multiplataforma'];
+//            Zend_Debug::dump($idUsuario);
+//            exit();
+            $arrayDados = array();
+            $arrayDados['nome'] = strtoupper($_POST['nome']);
+            $arrayDados['usuario'] = strtoupper($_POST['usuario']);
+            $arrayDados['id_perfil_multiplataforma'] = $_POST['id_perfil'];
+            $arrayDados['senha'] = $_POST['senha'];
+            $arrayDados['dt_data_hora_inclusao'] = date("Y-m-d H:i:s");
+
+            if ($idUsuario == "") {
+                $usuario = $_POST['usuario'];
+                $consultaUsuario = $monitor->fetchRow("usuario = '$usuario' ");
+                if ($consultaUsuario == null) {
+                    $monitor->insert($arrayDados);
+                } else {
+                    $this->_redirect('/usuario/cadastrar');
+                }
+            } else {
+                $monitor->update($arrayDados, "id_usuario_multiplataforma = '$idUsuario'");
+            }
+            $this->_redirect("/usuario/listar");
+        } else {
+            $this->_redirect('/login/index');
+        }
+    }
+
+    public function editarAction() {
+        Zend_Loader::loadClass('UsuarioBancoMultiplataforma');
+        $auth = Zend_Auth::getInstance();
+
+        if ($auth->hasIdentity()) {
+            $this->view->usuario = $auth->getIdentity();
+            $db = Zend_Db_Table_Abstract::getDefaultAdapter();
+            $select = "SELECT id_perfil_multiplataforma, nome FROM monitoracao.tb_perfil_multiplataforma";
+            $listaPerfil = $db->query($select)->fetchAll();
+
+            $this->view->perfil = $listaPerfil;
+
+            $this->_helper->layout->setLayout('layout');
+            $usuario = new UsuarioBancoMultiplataforma();
+            $id_usuario = $this->_getParam('id');
+
+            if ($id_usuario != "") {
+                $consultaUsuario = $usuario->fetchRow("id_usuario_multiplataforma = '$id_usuario'");
+                $this->view->usuario1 = $consultaUsuario;
+            }
+        }
+//        Zend_Debug::dump($consultaUsuario);
+//        exit();
+    }
+
+    public function listarAction() {
+        Zend_Loader::loadClass('UsuarioBancoMultiplataforma');
+        $auth = Zend_Auth::getInstance();
+
+            
+        if ($auth->hasIdentity()) {
+            $this->view->usuario = $auth->getIdentity();
+            $this->_helper->layout->setLayout('inicial');
+            $usuario = new UsuarioBancoMultiplataforma();
+            $listaUsuario = $usuario->fetchAll();
+            $this->view->listaUsuario = $listaUsuario;
+        } else {
+            $this->_redirect('/login/index');
+            
+        }
+    }
+
+    public function excluirAction() {
+        Zend_Loader::loadClass('UsuarioBancoMultiplataforma');
+        $auth = Zend_Auth::getInstance();
+        if ($auth->hasIdentity()) {
+            $usuario = new UsuarioBancoMultiplataforma();
+            $idUsuario = $this->_getParam("id");
+            $usuario->delete("id_usuario_multiplataforma = '$idUsuario'");
+            $this->_redirect("/usuario/listar");
+        } else {
+            $this->_redirect('/login/index');
+        }
+    }
+
+}
+
+?>
