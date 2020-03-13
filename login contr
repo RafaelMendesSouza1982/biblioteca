@@ -1,0 +1,43 @@
+<?php
+class LoginController extends Zend_Controller_Action{
+   
+    public function init() {        
+    }
+    
+    public function  indexAction(){
+          $this->_helper->layout->setLayout('layout1');
+    }
+    
+    public function loginAction(){
+        if ( $this->getRequest()->isPost() ) {              
+            $usuario = $_POST['usuario'];
+            $senha = $_POST['senha'];
+                try {
+                    Model_Auth::login($usuario, $senha);               
+                    //Redireciona para o Controller protegido
+                    return $this->_helper->redirector->goToRoute( array('controller' => 'index'), null, true);
+                } catch (Exception $e) {
+                    //Dados inválidos
+                    $this->_helper->FlashMessenger($e->getMessage());
+                    $this->_redirect('/login/index');
+                    
+                }
+            } 
+          else {            
+            $this->_helper->layout->setLayout('layout1');
+            $this->render('index');
+        }
+    }
+    
+    public function cadastrarAction(){     
+        
+    }
+    
+    public function sairAction(){
+        Zend_Auth::getInstance()->clearIdentity();
+        $this->_redirect('/');
+    }
+    
+}
+
+?>
