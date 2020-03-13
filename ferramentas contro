@@ -1,0 +1,138 @@
+<?php
+
+class FerramentaController extends Zend_Controller_Action {
+
+    public function init() {
+        Zend_Loader::loadClass('UtilDAO');
+        Zend_Loader::loadClass('Monitor');
+        Zend_Loader::loadClass('FerramentaMultiplataforma');
+        Zend_Loader::loadClass('Atualizacao');
+    }
+
+    public function preDispatch() {
+        $util = new UtilDAO();
+        $this->view->datahora = $util->dataAtualTela();
+    }
+
+    public function cadastrarferramentaAction() {
+        $auth = Zend_Auth::getInstance();
+
+        if ($auth->hasIdentity()) {
+            $this->view->usuario = $auth->getIdentity();
+            $this->_helper->layout->setLayout('inicial');
+            $this->render('index');
+        } else {
+            $this->_redirect('login/index');
+        }
+    }
+
+    public function salvarferramentaAction() {
+
+        $ferramenta = new FerramentaMultiplataforma();
+        $auth = Zend_Auth::getInstance();
+
+        if ($auth->hasIdentity()) {
+            $this->view->usuario = $auth->getIdentity();
+            $this->_helper->layout->setLayout('inicial');
+            $sistema = $_POST['ferramenta'];
+            $select = $ferramenta->select()->where("ferramenta = '$sistema'");
+            $listaFerramenta = $ferramenta->fetchRow($select);
+             
+            if ($listaFerramenta == '') {
+                $arrayDados = array();
+                $arrayDados['ferramenta'] = $_POST['ferramenta'];
+                $ferramenta->insert($arrayDados);
+            } else {
+                $msg = "<b>FERRAMENTA J� CADASTRADA!!</b>";
+                $this->view->salvar = $msg;
+            }
+        }
+        $this->render('cadastrarferramenta');
+    }
+
+    public function inativarAction() {
+        Zend_Loader::loadClass('MultiplataformaDAO');
+
+        $auth = Zend_Auth::getInstance();
+
+        if ($auth->hasIdentity()) {
+            $this->view->usuario = $auth->getIdentity();
+            $this->_helper->layout->setLayout('inicial');
+            $atualizacao = new MultiplataformaDAO();
+            $visualizars = $atualizacao->buscaFerramenta();
+            $resultadoAtualizacao = array();
+
+            foreach ($visualizars as $visualizar) {
+                $id_monitoracao = $visualizar['id_ferramenta'];
+                $resultadoAtualizacao["'$id_monitoracao'"]['visualizar'] = $visualizar;
+                $resultadoAtualizacao["'$id_monitoracao'"]['status'] = $this->verificaStatus($visualizar);
+            }
+            
+            $this->view->listaAtualizacao = $resultadoAtualizacao;
+        }
+    }
+
+    protected function verificaStatus($visualizar) {
+        $retorno = '';
+
+        if ($visualizar['status'] == '0') {
+            $retorno = "warning";
+        } else {
+            $retorno = "";
+        }
+        return $retorno;
+    }
+
+    protected function inativarStatus($visualizar) {
+        $retorno = '';
+
+        if ($visualizar['status'] == 'INATIVO') {
+            $retorno = "error";
+        } else {
+            $retorno = "";
+        }
+        return $retorno;
+    }
+
+    public function update1Action() {
+
+        $cadastro = new Zend_Db_Table('monitoracao.tb_sistema_atualizacao_multiplataforma');
+        $id_sistema = $this->_getParam('id');
+        $arrayDados = array();
+        $arrayDados['status'] = 1;
+        $cadastro->update($arrayDados, "id_sistema = '$id_sistema'");
+        $this->_redirect("/ferramenta/inativar");
+    }
+
+    public function updateAction() {
+
+        $cadastro = new Zend_Db_Table('monitoracao.tb_sistema_atualizacao_multiplataforma');
+        $id_sistema = $this->_getParam('id');
+        $arrayDados = array();
+        $arrayDados['status'] = 0;
+        $cadastro->update($arrayDados, "id_sistema = '$id_sistema'");
+        $this->_redirect("/ferramenta/inativar");
+    }
+
+    public function updateferramentaAction() {
+
+        $cadastro = new FerramentaMultiplataforma();
+        $id_sistema = $this->_getParam('id');
+        $arrayDados = array();
+        $arrayDados['status'] = 0;
+        $cadastro->update($arrayDados, "id_ferramenta = '$id_sistema'");
+        $this->_redirect("/ferramenta/inativar");
+    }
+
+    public function updateferramenta1Action() {
+
+        $cadastro = new FerramentaMultiplataforma();
+        $id_sistema = $this->_getParam('id');
+        $arrayDados = array();
+        $arrayDados['status'] = 1;
+        $cadastro->update($arrayDados, "id_ferramenta = '$id_sistema'");
+        $this->_redirect("/ferramenta/inativar");
+    }
+
+}
+?>
