@@ -1,0 +1,216 @@
+<style>
+    fieldset{
+        border: 1px solid #d7d4f0;
+        border-radius: 8px;
+        padding: 20px;
+        width: 50%;
+    }
+    .caixa-ferramentas{
+        float: left;
+        background-color: blue;
+
+    }
+    .divs{
+        display:none;
+    }
+
+    .fonts-title{
+        color: #fff;
+        background-color: #0066ff;
+        border-radius: 10px;
+        padding-left: 5px;
+        padding-bottom: 2px;
+        padding-right: 5px;
+        padding-top: 2px;
+    }
+</style>
+
+<script>
+    $(document).ready(function () {
+        $('#motivo_baixa').attr("disabled", true);
+        $('#data_baixa').attr("disabled", true);
+        $('#obs_baixa').attr("disabled", true);
+        $('#obs_baixa2').attr("disabled", true);
+        $("#baixa").change(function () {
+            var target = $(this).val();
+            if (target === "NAO") {
+                $('#motivo_baixa').attr("disabled", true);
+                $('#data_baixa').attr("disabled", true);
+                $('#obs_baixa').attr("disabled", true);
+                $('#motivo_baixa').val("");
+                $('#data_baixa').val("");
+                $('#obs_baixa').val("");
+                $('#obs_baixa2').val("");
+            } else {
+                $('#motivo_baixa').attr("disabled", false);
+                $('#data_baixa').attr("disabled", false);
+                $('#obs_baixa').attr("disabled", false);
+                $('#obs_baixa2').attr("disabled", false);
+                $("#motivo_baixa").change(function () {
+                });
+            }
+        });
+    });
+</script>
+<script type="text/javascript">
+    function id(el) {
+        return document.getElementById(el);
+    }
+    function mostra(element) {
+        if (element.value) {
+            id(element.value).style.display = 'block';
+        }
+    }
+    function esconde_todos($element, tagName) {
+        var $elements = $element.getElementsByTagName(tagName),
+                i = $elements.length;
+        while (i--) {
+            $elements[i].style.display = 'none';
+        }
+    }
+    window.addEventListener('load', function () {
+        var $Batch = id('Batch'),
+                $Online = id('Online'),
+                $equipe = id('ambiente');
+
+        esconde_todos(id('principal'), 'div');
+        mostra($equipe);
+
+        //mostrando ao mudar o select
+        $equipe.addEventListener('change', function () {
+            esconde_todos(id('principal'), 'div');
+            mostra(this);
+        });
+    });
+</script>
+<hr class="mb-4">
+<?php
+if (isset($this->atualizacao->id_sistema)) {
+    $id_sistema = $this->atualizacao->id_sistema;
+}
+if (isset($this->sistema1)) {
+    $sistema_batch1 = $this->sistema1;
+}
+if (isset($this->sistema2)) {
+    $sistema_online1 = $this->sistema2;
+}
+?>
+<form class="form-inline well" id="frm" action="<?php echo $this->baseUrl(); ?>/atualizacao/salvarchecklist"  method="post">
+    <div class="container" style="padding-left: 22%">
+        <input type="hidden" value="<?php echo $id_sistema; ?>" name="id_sistema" />
+        <fieldset>
+            <div id="resultadoFuncionario"></div>			
+            <p class="alert alert-info text4">Formulário Cadastro CheckList</p>
+            <div class="control-group esp_form">
+                <div class="form_left">
+                    <div class="controls">
+                        <label class="control-label">Equipe</label>
+                        <select class="base_select" name="ambiente" id="ambiente">
+                            <option value="">Selecione uma Equipe</option>
+                            <option value="BATCH">BATCH</option>
+                            <option value="ONLINE">ONLINE</option>
+                        </select>
+                    </div>
+                </div>
+                <div class="form_right">
+                    <div class="controls">
+                        <div id="principal">
+                            <div id="BATCH">
+                                <label class="control-label">Sistema <span class="fonts-title">Batch</span></label>
+                                <select  class="base_select" name="sistema1" id="sistema1">
+                                    <?php foreach ($sistema_batch1 as $sistema1) { ?>
+                                        <option value="<?php echo $sistema1['sistema1']; ?>"> <?php echo $sistema1['sistema1']; ?></option>
+                                    <?php } ?>
+                                </select> 
+                            </div>
+                            <div class="divs" id="ONLINE">
+                                <label class="control-label">Sistema <span class="fonts-title">Online</span></label>
+                                <select  class="base_select" name="sistema2" id="sistema2">
+                                    <?php foreach ($sistema_online1 as $sistema2) { ?>
+                                        <option value="<?php echo $sistema2['sistema2']; ?>"><?php echo $sistema2['sistema2']; ?></option>
+                                    <?php } ?>
+                                </select> 
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="control-group esp_form">
+                <div class="form_left">
+                    <label class="control-label">Status CheckList: <font color="red">(*)</font></label>
+                    <div class="controls">
+                        <select id="baixa" class="base_select" name="baixa" onchange="controlaCampos()">
+                            <option selected>Escolha uma Opção </option>
+                            <option value="NAO">OK</option>
+                            <option value="SIM">FALHA</option>
+                        </select>
+                    </div>
+                </div>
+                <div class="form_right">
+                    <label class="control-label">Turno CheckList: <font color="red">(*)</font></label>
+                    <div class="controls">
+                        <select id="baixa" class="base_select" name="turno" onchange="controlaCampos()">
+                            <option selected>Escolha uma Opção </option>
+                            <option value="MANHA">Manha</option>
+                            <option value="TARDE">Tarde</option>
+                            <option value="NOITE">Noite</option>
+                        </select>
+                    </div>
+                </div>
+               
+            </div>
+            <div class="control-group esp_form">
+                 <div class="form_left">
+                    <label for="motivo_baixa">Analista:</label>
+                    <input  class="base_input" readonly="true" type="text"  style="background-color: #eee" class="input-xlarge" id="responsavel" value="<?php echo $this->usuario->getFullName(); ?>" name="responsavel" >
+                </div>
+                <div class="form_right">
+                    <label class="control-label" for="data_baixa">Data Hora da Inclusão:</label>
+                    <input class="base_input" readonly="true" type="datetime" style="background-color: #eee" id="data" name="data_hora" value="<?php echo date("d-m-Y H:i:s"); ?>"> 
+                </div>
+            </div>
+            <div class="control-group esp_form">
+                <div class="form_left2">
+                    <label class="control-label">Observações:</label>
+                    <div class="controls">
+                        <textarea class="base_textarea2" cols ="12" rows="5" id="obs_baixa" name="observacoes" required></textarea>
+                    </div>		
+                </div>
+            </div>
+            <hr class="mb-4">
+            <div class="control-group esp_form_btn">
+                <div class="form_left3">
+                    <button id="btnSalvar" type="submit" class="border-btn btn-outline-primary" style="margin-right: 10px; padding: 8px;">
+                        <span class="fas fa-save"></span> Cadastrar
+                    </button>
+                    <button type="reset" class="border-btn btn-outline-danger" style=" padding: 8px;">
+                        <span class="fas fa-undo-alt"></span> Limpar
+                    </button>
+                </div>
+            </div>	
+
+        </fieldset>
+    </div>
+</form>
+<hr class="mb-4">
+<hr class="mb-4">
+<script type="text/javascript">
+
+    var index = 0;
+
+    $("#btnSalvar").click(function () {
+        //Faz a validação do formulário
+        if ($("#sistema").val() == "Selecione o Sistema" || $("#data").val() == "" || $("#descricao").val() == "" || $("#tipo").val() == "Selecione o Tipo Informativo...") {
+            alert("Os valores com * devem ser preenchidos");
+            return false;
+        }
+    });
+
+    $("#btnVoltar").click(function () {
+        $(window.document.location).attr("href", "/monitor/index");
+    });
+
+
+</script>
+
+
