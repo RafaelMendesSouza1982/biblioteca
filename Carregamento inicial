@@ -1,0 +1,66 @@
+
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Sample - Preloader</title>
+    <link rel="stylesheet" href="css/bootstrap.min.css">
+    <link rel="stylesheet" href="css/main.css">
+</head>
+
+<body class="bg-light">
+    <div id="app" class="container">
+            <div v-for='item in cards' class='row p-2'>
+                <div class='card' style='width: 18rem;'>
+                    <div class='card-body'>
+                        <h5 class='card-title'><a target='_blank' :href='item.absolute_url'>{{ item.name }}</a></h5>
+                        <h6 class='card-subtitle mb-2 text-muted'>Rank {{ item.rank }}</h6>
+                    </div>
+                </div>
+            </div>
+        <div id="preloader"></div>
+        <script src="js/vue.js"></script>
+        <script src="js/jquery-3.4.1.min.js"></script>
+        <script src="js/bootstrap.min.js"></script>
+        <script>
+
+            $(window).on('load', function () {
+                if ($('#preloader').length) {
+                    $('#preloader').delay(100).fadeOut('slow', function () {
+                        $(this).remove();
+                    });
+                }
+            });
+
+            var app = new Vue({
+                el: '#app',
+                data: {
+                    cards: []
+                },
+                methods: {
+                    fetchCards: function () {
+
+                        var service = "https://downdetector.com.br/json/top10/2020/11/";
+
+                        $.ajax({
+                            url: service,
+                            method: "GET",
+                            dataType: "json",
+                            success: function (response) {
+                                app.cards = response.week;
+                            }
+                        });
+
+                    }
+                },
+                mounted: function () {
+                    this.fetchCards();
+                }
+            });
+
+        </script>
+</body>
+
+</html>
